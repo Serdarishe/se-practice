@@ -1,0 +1,33 @@
+@startuml
+' Use-case diagram — Smart Campus study room booking (reviewed version)
+' Two actors, outside the boundary. Six use cases, inside it.
+' Changes vs the AI output are listed in lab-report.md section 7.
+
+left to right direction
+
+actor Student
+actor Administrator
+
+rectangle "Smart Campus study room booking" {
+  usecase "View availability"      as UC01
+  usecase "Book room"              as UC02
+  usecase "Cancel booking"         as UC03
+  usecase "Block or unblock room"  as UC04
+  usecase "Review usage"           as UC05
+  usecase "Send confirmation"      as UC06
+}
+
+' Student triggers only the three booking functions (US-01, US-02, US-03)
+Student --> UC01
+Student --> UC02
+Student --> UC03
+
+' Administrator triggers blocking and usage review (US-05, US-06)
+Administrator --> UC04
+Administrator --> UC05
+
+' Send confirmation is triggered by the system after a booking or a cancellation (US-04)
+UC02 ..> UC06 : <<include>>
+UC03 ..> UC06 : <<include>>
+
+@enduml
