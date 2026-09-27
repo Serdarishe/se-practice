@@ -30,7 +30,7 @@ checker:
   pass: 23
   fail: 0
   error: 0
-  commit: abc1234
+  commit: 038a006
 
 assumptions:
   overlap_touching_bookings: allowed

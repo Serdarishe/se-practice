@@ -354,7 +354,7 @@ PASS   counts.user_stories                       6
 PASS   counts.acceptance_criteria_sets           3
 PASS   checker                                   23 PASS · 0 FAIL · 0 ERROR
 NOTE   checker                                   you are claiming a clean run — it will be re-run at your commit, so make sure it is true
-PASS   checker.commit                            abc1234
+PASS   checker.commit                            038a006
 PASS   assumptions.overlap_touching_bookings     allowed
 PASS   assumptions.exactly_two_hours             allowed
 PASS   traceability.use_cases_not_covered        UC-05, UC-06
@@ -377,7 +377,7 @@ Shape is fine. This says nothing about whether the work is good.
 | --- | --- | --- | --- |
 | `check_requirements.py` | 23 | 0 | 0 |
 
-Commit these numbers were produced at (`git rev-parse --short HEAD`): abc1234
+Commit these numbers were produced at (`git rev-parse --short HEAD`): 038a006
 
 **Every FAIL, one line each: what it is and what you decided to do about it.** A FAIL you report and
 explain costs you nothing.
