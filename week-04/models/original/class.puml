@@ -1,0 +1,39 @@
+@startuml
+class Student {
+  +studentId: String
+  +name: String
+  +bookRoom()
+  +cancelBooking()
+}
+
+class Room {
+  +roomId: String
+  +name: String
+  +blocked: Boolean
+  +block()
+  +unblock()
+}
+
+class Booking {
+  +bookingId: String
+  +start: DateTime
+  +end: DateTime
+  +status: String
+  +confirm()
+  +cancel()
+}
+
+class BookingService {
+  +createBooking()
+}
+
+Student "1" -- "1..*" Booking : makes
+Room "1" *-- "0..*" Booking : contains
+BookingService "1" -- "0..*" Booking : creates
+
+note right of Booking
+  R2: Active bookings for the same room cannot overlap.
+end note
+
+' Assumptions: touching bookings are allowed; blocking keeps existing bookings.
+@enduml

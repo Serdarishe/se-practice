@@ -1,0 +1,21 @@
+@startuml
+start
+:Enter room and time slot;
+
+if (Future start and valid duration? (R1)) then ([yes])
+  if (Room blocked? (R3)) then ([no])
+    if (Overlapping active booking? (R2)) then ([no])
+      :Create booking;
+      :Show confirmation (R4);
+    else ([yes])
+      :Reject booking - time unavailable;
+    endif
+  else ([yes])
+    :Reject booking - room blocked;
+  endif
+else ([no])
+  :Reject booking - invalid time range;
+endif
+
+stop
+@enduml
