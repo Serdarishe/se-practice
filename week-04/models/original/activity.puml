@@ -1,0 +1,12 @@
+@startuml
+start
+:Enter room and time slot;
+:Check time range, blocked status and overlaps (R1, R3, R2);
+if (All booking rules satisfied?) then ([yes])
+  :Create booking;
+  :Show confirmation;
+else ([no])
+  :Reject booking;
+endif
+stop
+@enduml

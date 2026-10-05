@@ -1,0 +1,44 @@
+# week-04/submission.yml — fill the four personal/commit fields marked below only after the final checker run.
+
+schema: 1
+week: "04"
+
+student:
+  name:Serdar Dundar
+  student_id:24B031016
+  github:Serdarishe
+
+assistant:
+  tool: ChatGPT
+  model: GPT-5.6 Sol
+
+counts:
+  behaviour_diagram: activity
+  stories_source: reference
+  use_cases: 6
+  change_log_rows: 5
+
+checker:
+  pass:35
+  fail:0
+  error:0
+  commit:c2d147a
+  kept_fails: []
+
+assumptions:
+  overlap_touching_bookings: allowed
+  blocking_a_booked_room: keep-bookings
+
+traceability:
+  use_cases_not_traced: []
+  rules_not_shown: []
+
+review_findings:
+  - Student to Receive confirmation was removed because R4 makes confirmation an outcome of Book room, not a separate Student goal.
+  - Student to Booking changed from 1..* to 0..* because US-01 does not require every student to already have a booking.
+  - The activity split the combined rule check into separate R1, R3 and R2 decisions before Create booking.
+
+honesty:
+  originals_unedited: yes
+  can_explain_everything_submitted: no
+  ai_usage_disclosed: yes
