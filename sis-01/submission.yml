@@ -4,7 +4,7 @@ assignment: "sis-01"
 student:
   name: "Serdar Dundar"
   student_id: "24B031016"
-  group: "16:00-19:00"
+  group: "16:00-19:00,CSCI-2208"
   github: "Serdarishe"
 
 topic: "1.9"
