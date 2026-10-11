@@ -16,9 +16,9 @@ live in `report.md`, section 8 — this file is the summary, not a second copy.
 
 **Every source in section 6 is one I opened and read myself:** yes
 
-**Everything I submitted, I can explain and defend without consulting the assistant:** yes / no
+**Everything I submitted, I can explain and defend without consulting the assistant:** yes
 
-**Anything I accepted from the AI without fully understanding it:**
+**Anything I accepted from the AI without fully understanding it:** Nothing
 <!-- Name the section and the sentence. "Nothing" is a valid answer only if it is true. -->
 
 Signed: Serdar Dundar
