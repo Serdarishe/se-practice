@@ -1,0 +1,33 @@
+@startuml
+left to right direction
+
+actor Student
+actor Administrator
+
+rectangle "Smart Campus" {
+  usecase "View room availability" as UC_View
+  usecase "Book room" as UC_Book
+  usecase "Cancel booking" as UC_Cancel
+  usecase "Receive confirmation" as UC_Confirm
+  usecase "Block room" as UC_Block
+  usecase "Unblock room" as UC_Unblock
+  usecase "Review usage" as UC_Review
+}
+
+Student -- UC_View
+Student -- UC_Book
+Student -- UC_Cancel
+Student -- UC_Confirm
+Administrator -- UC_Block
+Administrator -- UC_Unblock
+Administrator -- UC_Review
+
+' why: R4 says a successful booking produces a confirmation
+UC_Book ..> UC_Confirm : <<include>>
+
+note right of UC_Book
+  Assumptions:
+  - Touching bookings are allowed.
+  - Blocking a room keeps existing bookings.
+end note
+@enduml
