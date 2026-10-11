@@ -22,8 +22,8 @@ student:
 topic: "1.9"                     # one of 1.1 … 1.10 — the same as the **Topic:** line in report.md
 
 assistant:
-  tool:                         # e.g. ChatGPT (web), Claude.ai, Gemini app, DeepSeek chat
-  model:                        # the exact model with its version, as the tool shows it;
+  tool: "Claude"                # e.g. ChatGPT (web), Claude.ai, Gemini app, DeepSeek chat
+  model: "claude-opus-5-5"      # the exact model with its version, as the tool shows it;
                                 # if the tool does not show it, write: not displayed
 
 checker:                        # from your LAST run of python tests/check_report.py
