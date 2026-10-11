@@ -80,7 +80,17 @@ The main limitation is that my evidence is narrow. I read only the eight lines o
 <!-- 150–200 words. NOT part of the main total. Written by you, not by the assistant:
      what helped, what you changed, what you learned. Specific beats flattering. -->
 
-(write here)
+### 1. What really helped when working with AI?
+
+AI helped me find mistakes and weak points in my answers that I did not notice at first. For example, it mentioned a sponsor who was not actually in the scenario, which showed me that AI can sometimes invent information. It also helped me understand the ethical problems more clearly.
+
+### 2. What did I change and why?
+
+I checked the ACM Code of Ethics on the official website and found that some statements suggested by AI were not written exactly that way in the source. I also removed the claim about encryption because there was no evidence that the application actually used it. I made these changes to keep my answers accurate and based on real information.
+
+### 3. What did I learn?
+
+I learned that AI is a useful tool, but we should not trust everything it says without checking. It is important to compare AI-generated answers with reliable sources and think critically. I also realized that working under a deadline can affect the quality of our work, so better time management and careful checking are necessary.
 
 ## 6. References
 
