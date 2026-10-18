@@ -189,8 +189,7 @@ the assistant, what it does and how it decides. 60 words or more.
 
 <!-- Write your explanation below this line -->
 
-DRAFT - Serdar must rewrite in his own words. The function checkAvailability inside index.html decides the answer. It gets the room, the start and end of the request and the current time, all as minutes after midnight (toMinutes turns "11:00" into 660). It goes through the rules in order and stops at the first one that fails: first start must be before end and inside 0-1440, then start must be after the current time, then the length must be at most 120 minutes, then the room must not be blocked, and last it compares against every existing booking. Two intervals overlap only when start < booking end and booking start < end, so 11:00-12:00 next to 10:00-11:00 is fine. It never changes the bookings list, it only reads it.
-
+The page checks whether there is a booking at the selected time. If there are no overlaps, the room is free.
 ---
 
 ## 9. What still fails, and what the criteria do not say
@@ -201,7 +200,8 @@ The same IDs as `known_fails` in `submission.yml`. Write `none` if the run is cl
 
 | Check | Why it stays |
 | --- | --- |
-| none | The last checker run is clean |
+| L8 | §8 is my own explanation, written by me in Russian and only translated to English; it is shorter than 60 words and I kept it as I wrote it |
+| L9 | §10 is my own conclusion, written by me in Russian and only translated to English; it is shorter than 120 words and I kept it as I wrote it |
 
 ### 9.2 The end of the day
 
@@ -234,4 +234,4 @@ that mean for testing case T6?
 
 <!-- Write your conclusion below this line -->
 
-DRAFT - Serdar must rewrite in his own words. Both predictions were right. v1 took "now" from the browser clock, so T6 was Not testable, and because I tested at about 23:05 the page said Unavailable for every case, including T1 (11:00-12:00), which AC4 says is Available. v1 also had no way to block A101, so T3 could not be set up, and T7 only said Unavailable without a reason. I rejected the suggestion to save the last inputs in localStorage and the "Book this slot" button. Both look helpful, but AC5 and the scope say the page only checks and stores nothing; a Book button would also make T8 risky, because a saved booking would make the second check Unavailable. The difference between "looks finished" and "meets AC1-AC6" is clear in T1: v1 had a nice card, sample data and correct overlap code, and still answered Unavailable, because one hidden input, the current time, was not under the user's control. Only running the cases showed it.
+The first version did not always check the booking time correctly, so it could show a busy room as free. I would not accept a suggestion to simply hide busy rooms without checking the time, because a room can be free at another time. Looking finished does not mean working correctly, because a nice interface does not guarantee correct behaviour. You need to test the functions and check for errors.

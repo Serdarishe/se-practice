@@ -14,7 +14,7 @@ including anything an AI tool produced.
 Why not Bolt.new: the lab was done on the deadline day in a Claude cloud session that cannot sign in to Bolt.new, so the deck's three prompts were given to Claude as the app builder instead (README fallback rule).
 
 **I used another assistant as well (to explain code, to draft text in lab-report.md, …):** yes
-Claude (claude-opus-5-5) drafted every section of lab-report.md, including §8 and §10, which are marked DRAFT and must be rewritten in my own words.
+Claude (claude-opus-5-5) drafted lab-report.md sections 1-7 and 9. Sections 8 and 10 are my own answers, written in Russian and translated to English by Claude word for word.
 
 **`original/` holds Bolt's first version exactly as downloaded, and `evidence/v1.png` shows it:** no - there is no Bolt version; `original/` holds the fallback builder's first version unedited (commit 07290f0, before any cleanup), and `evidence/v1.png` shows it.
 
