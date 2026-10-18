@@ -16,7 +16,7 @@ assignment: "sis-02"            # do not edit
 student:
   name: "Serdar Dundar"   # as in the university register
   student_id: "24B031016"   # e.g. 00X000000
-  group: ""   # your group code, as in the timetable
+  group: "16:00-19:00,CSCI-2208"   # your group code, as in the timetable
   github: "Serdarishe"   # username only, not a URL
 
 assistant:
