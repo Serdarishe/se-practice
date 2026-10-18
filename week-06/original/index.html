@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Campus Room Availability Checker</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: #f3f5f9; color: #1d2433; }
+  main { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .sub { color: #5b6475; margin: 0 0 20px; }
+  .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 16px; }
+  label { display: block; font-weight: 600; margin-bottom: 6px; }
+  select, input { width: 100%; padding: 10px; font-size: 1rem; border: 1px solid #c9cfdb; border-radius: 8px; }
+  .row { display: flex; gap: 12px; margin-top: 14px; }
+  .row > div { flex: 1; }
+  button { margin-top: 18px; width: 100%; padding: 12px; font-size: 1rem; border: 0; border-radius: 8px; background: #2f5bea; color: #fff; cursor: pointer; }
+  .result { padding: 16px; border-radius: 10px; font-size: 1.25rem; font-weight: 700; text-align: center; }
+  .ok { background: #e3f7e9; color: #146c2e; }
+  .no { background: #fde7e7; color: #a11c1c; }
+  ul { padding-left: 18px; margin: 8px 0 0; }
+  .tag { font-size: .8rem; background: #fde7e7; color: #a11c1c; padding: 2px 8px; border-radius: 99px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Smart Campus Room Availability Checker</h1>
+  <p class="sub">Check if a room is free for a time slot. Sample data only.</p>
+
+  <div class="card">
+    <label for="room">Room</label>
+    <select id="room"></select>
+    <div id="roomInfo" style="margin-top:12px"></div>
+
+    <div class="row">
+      <div><label for="start">Start</label><input type="time" id="start" value="11:00"></div>
+      <div><label for="end">End</label><input type="time" id="end" value="12:00"></div>
+    </div>
+    <button id="check">Check availability</button>
+  </div>
+
+  <div id="result"></div>
+</main>
+
+<script>
+  const rooms = [
+    { id: "A101", name: "A101 - Lecture Hall", blocked: false, bookings: [{ start: 600, end: 660 }] },
+    { id: "B204", name: "B204 - Seminar Room", blocked: false, bookings: [{ start: 540, end: 600 }, { start: 780, end: 840 }] },
+    { id: "C310", name: "C310 - Computer Lab", blocked: true, bookings: [] }
+  ];
+
+  const roomSelect = document.getElementById("room");
+  rooms.forEach(r => {
+    const o = document.createElement("option");
+    o.value = r.id; o.textContent = r.name;
+    roomSelect.appendChild(o);
+  });
+
+  function toMinutes(hhmm) {
+    const [h, m] = hhmm.split(":").map(Number);
+    return h * 60 + m;
+  }
+  function toHHMM(min) {
+    return String(Math.floor(min / 60)).padStart(2, "0") + ":" + String(min % 60).padStart(2, "0");
+  }
+
+  function showRoom() {
+    const room = rooms.find(r => r.id === roomSelect.value);
+    const list = room.bookings.map(b => "<li>" + toHHMM(b.start) + " - " + toHHMM(b.end) + "</li>").join("");
+    document.getElementById("roomInfo").innerHTML =
+      (room.blocked ? '<span class="tag">Blocked</span>' : "") +
+      "<div><b>Existing bookings:</b>" + (list ? "<ul>" + list + "</ul>" : " none") + "</div>";
+  }
+
+  function isAvailable(room, start, end) {
+    const now = new Date();
+    const current = now.getHours() * 60 + now.getMinutes();
+    if (!(start >= 0 && start < end && end <= 1440)) return false;
+    if (start <= current) return false;
+    if (end - start > 120) return false;
+    if (room.blocked) return false;
+    for (const b of room.bookings) {
+      if (start < b.end && b.start < end) return false;
+    }
+    return true;
+  }
+
+  document.getElementById("check").addEventListener("click", () => {
+    const room = rooms.find(r => r.id === roomSelect.value);
+    const start = toMinutes(document.getElementById("start").value);
+    const end = toMinutes(document.getElementById("end").value);
+    const ok = isAvailable(room, start, end);
+    document.getElementById("result").innerHTML =
+      '<div class="result ' + (ok ? "ok" : "no") + '">' + (ok ? "Available" : "Unavailable") + "</div>";
+  });
+
+  roomSelect.addEventListener("change", showRoom);
+  showRoom();
+</script>
+</body>
+</html>
