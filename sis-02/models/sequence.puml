@@ -1,3 +1,49 @@
-' SIS #02 — your FINAL sequence diagram goes here, as PlantUML (@startuml … @enduml).
-' Start from the AI's original in models/original/sequence.puml, apply your accepted review
-' decisions, then render it to models/img/sequence.png (or .svg). README section 5.
+@startuml
+title Course registration - sequence (final)
+actor Student
+boundary RegistrationUI
+control RegistrationService
+database EnrollmentRepository
+
+Student -> RegistrationUI : browseCatalog(semester)
+RegistrationUI -> RegistrationService : getOfferings(semester)
+RegistrationService -> EnrollmentRepository : findOfferingsWithCounts(semester)
+EnrollmentRepository --> RegistrationService : offerings, enrollment counts
+RegistrationService --> RegistrationUI : offerings (code, title, offeringLabel, availablePlaces)
+RegistrationUI --> Student : show catalog
+Student -> RegistrationUI : selectOffering(offeringId)
+Student -> RegistrationUI : requestRegistration(offeringId)
+RegistrationUI -> RegistrationService : register(studentId, offeringId)
+
+group atomic registration transaction
+  RegistrationService -> EnrollmentRepository : lockOffering(offeringId)
+  EnrollmentRepository --> RegistrationService : capacity
+  RegistrationService -> EnrollmentRepository : existsEnrollment(studentId, offeringId)
+  EnrollmentRepository --> RegistrationService : exists
+  RegistrationService -> EnrollmentRepository : countEnrollments(offeringId)
+  EnrollmentRepository --> RegistrationService : count
+  alt already enrolled
+    RegistrationService --> RegistrationUI : reject("already enrolled")
+    RegistrationUI --> Student : show "already enrolled"
+  else course full
+    RegistrationService --> RegistrationUI : reject("course full")
+    RegistrationUI --> Student : show "course full"
+  else not enrolled and places left
+    RegistrationService -> EnrollmentRepository : createEnrollment(studentId, offeringId)
+    EnrollmentRepository --> RegistrationService : enrollment
+    RegistrationService --> RegistrationUI : confirmRegistration(enrollment, availablePlaces)
+    RegistrationUI --> Student : show confirmation
+  end
+end
+
+note right of RegistrationService
+  Atomic step: lockOffering, existsEnrollment, countEnrollments
+  and createEnrollment run as one atomic operation. The lock on
+  the offering makes competing requests wait, so two students
+  cannot take the same last place.
+  Guards: already enrolled = exists is true;
+  course full = not exists and count >= capacity;
+  places left = not exists and count < capacity.
+  The catalog view and selectOffering reserve nothing.
+end note
+@enduml
