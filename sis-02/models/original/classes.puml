@@ -1,0 +1,36 @@
+@startuml
+title Course registration - domain classes (draft)
+
+class Student {
+  studentId : String
+  name : String
+}
+
+class Course {
+  code : String
+  title : String
+}
+
+class CourseOffering {
+  offeringId : String
+  semester : String
+  section : String
+  capacity : int
+  availablePlaces() : int
+}
+
+class Enrollment {
+  enrollmentId : String
+  enrolledAt : DateTime
+}
+
+Course "1" -- "1..*" CourseOffering : is offered as >
+Student "1" -- "0..*" Enrollment : holds >
+CourseOffering "1" -- "0..*" Enrollment : receives >
+
+note "Capacity (R2): the number of Enrollments of an offering\nnever exceeds its capacity." as N1
+N1 .. CourseOffering
+
+note "Uniqueness (R3): at most one Enrollment per\n(studentId, offeringId) pair." as N2
+N2 .. Enrollment
+@enduml

@@ -1,0 +1,42 @@
+@startuml
+title Course registration - sequence (draft)
+actor Student
+boundary RegistrationUI
+control RegistrationService
+database EnrollmentRepository
+
+Student -> RegistrationUI : browseCatalog(semester)
+RegistrationUI -> RegistrationService : getOfferings(semester)
+RegistrationService -> EnrollmentRepository : findOfferingsWithCounts(semester)
+EnrollmentRepository --> RegistrationService : offerings, enrollment counts
+RegistrationService --> RegistrationUI : offerings (code, title, section, availablePlaces)
+RegistrationUI --> Student : show catalog
+Student -> RegistrationUI : selectOffering(offeringId)
+Student -> RegistrationUI : requestRegistration(offeringId)
+RegistrationUI -> RegistrationService : register(studentId, offeringId)
+
+group atomic registration transaction
+  RegistrationService -> EnrollmentRepository : existsEnrollment(studentId, offeringId)
+  EnrollmentRepository --> RegistrationService : exists
+  RegistrationService -> EnrollmentRepository : countEnrollments(offeringId)
+  EnrollmentRepository --> RegistrationService : count
+  alt already enrolled
+    RegistrationService --> RegistrationUI : reject("already enrolled")
+    RegistrationUI --> Student : show "already enrolled"
+  else course full
+    RegistrationService --> RegistrationUI : reject("course full")
+    RegistrationUI --> Student : show "course full"
+  else not enrolled and places left
+    RegistrationService -> EnrollmentRepository : createEnrollment(studentId, offeringId)
+    EnrollmentRepository --> RegistrationService : enrollment
+    RegistrationService --> RegistrationUI : confirmRegistration(enrollment)
+    RegistrationUI --> Student : show confirmation
+  end
+end
+
+note right of RegistrationService
+  The existence check, the count check and createEnrollment
+  run as one atomic operation, so two requests cannot take
+  the same last place. The catalog view reserves nothing.
+end note
+@enduml
