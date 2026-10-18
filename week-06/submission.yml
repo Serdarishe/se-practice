@@ -24,11 +24,11 @@ counts:
   final_matches: 9
 
 checker:
-  pass: 27
-  fail: 0
+  pass: 25
+  fail: 2
   error: 0
-  commit: b99f777
-  known_fails: []
+  commit: df9c915
+  known_fails: [L8, L9]
 
 assumptions:
   end_of_day: not-expressible
