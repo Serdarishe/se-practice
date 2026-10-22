@@ -190,41 +190,41 @@ Do NOT add login, accounts, a backend, a database, an external API, local storag
 
 | # | AI claim or recommendation | How I verified it | Decision | Reason (AC or case) |
 | --- | --- | --- | --- | --- |
-| 1 | (write here) | (write here) | (write here) | (write here) |
-| 2 | (write here) | (write here) | (write here) | (write here) |
-| 3 | (write here) | (write here) | (write here) | (write here) |
+| 1 | Python AC1 is only "partially satisfied" because `now` is not validated: `can_book(600, 660, -1, False, [])` returns True; it should validate `now` as an integer 0-1439 | Ran the call: it returns True, so the observation is true. Checked the brief: "Assume now is valid (0-1439)" (README section 1), and my baseline assumption 2.4 says the same | Reject | The contract assumes a valid `now`; validating it adds behaviour outside AC1-AC4 and changes no case T1-T11. AC1 is about `start` and `end` |
+| 2 | AC6: `grid grid-cols-2` forces two columns, so the time inputs may clip or overflow on a narrow screen | Opened the final page in Chromium at 375 px and 320 px (Playwright, T1 entered). 375 px: page width 375, each input 141 px, nothing cut (evidence/final-narrow.png). 320 px: no horizontal scroll, but the input text is cut to "11:00 A" / "12:00 P" (evidence/final-cases/critique-320px.png) | Modify | AC6 asks for ~375 px (T12), where the layout works, so no change to the final. The clipping below 375 px is real and goes to section 13 as a limitation with a one-class fix (`grid-cols-1 sm:grid-cols-2`) |
+| 3 | AC2-AC5 pass in both: 120 allowed, 121 rejected, blocked rejected, touching allowed, `existing` not mutated | Ran the calls from the review: (660, 780) True, (660, 781) False, blocked False, (570, 630) False, (660, 690) True, `existing == before` True; suite 28 tests OK; page T1-T5, T10, T11 on the final | Accept | T1, T2, T3, T4, T5, T10, T11 all give the expected result on both final artifacts |
+| 4 | The line numbers it cites (Python "lines 35-40", "line 43", "lines 48-50"; React "line 187", "line 296") | Compared with the files: `code/booking.py` has 40 lines, the checks are on lines 19-38; `App.tsx` has 262 lines, the grid is on line 133 and the blocked check on line 34 | Reject | The citations are wrong (the Python ones are the React line numbers), so I used my own line references in sections 3 and 6 |
 
 ## 9. Coding-agent analysis
 
 ### 9.1 The loop
 
-<!-- One real pass through the loop from this assignment — with your assistant or with Bolt. -->
+<!-- One real pass: the Bolt repair of issue 1. -->
 
 | Step | What happened in this assignment |
 | --- | --- |
-| User goal | (write here) |
-| Model / plan | (write here) |
-| Tool call | (write here) |
-| Observation | (write here) |
-| Next step | (write here) |
-| Human review | (write here) |
+| User goal | Make the page stop showing a stale "Available" after Room blocked is switched on or the times change (issue 1, AC3/AC5). |
+| Model / plan | Bolt answered with a plan in one sentence: "I'll add setResult(null) to each of the four control change handlers so the result clears whenever inputs change." |
+| Tool call | Bolt edited `src/App.tsx` and rebuilt the project; its chat showed "2 actions taken" and saved "Version 2: Clear result on input change". |
+| Observation | In the preview: 11:00-12:00 -> Check -> Available; switching Room blocked on without pressing Check made the result card disappear (evidence/after-1.png). |
+| Next step | Bolt offered follow-ups "Add preset time buttons" and "Show daily schedule timeline"; I ignored them and sent the next focused prompt (remove @supabase/supabase-js). |
+| Human review | I read the diff between `web/original/src/App.tsx` and `web/final/src/App.tsx` (only `setResult(null)` in four handlers, plus the later midnight checkbox) and reran T1-T12 on the final page and the checker. |
 
 ### 9.2 Context, tools and permissions
 
-<!-- At least three rows. Last column: Observed (you saw it happen) or Assumed (you infer it
-     about the internals). Use both at least once. -->
-
 | Tool | Context it used | Tools or permissions | Observed or assumed |
 | --- | --- | --- | --- |
-| (write here) | (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) | (write here) |
+| Bolt.new | My prompt with AC1-AC6 and the existing project files | Read files ("4 files read"), wrote `src/App.tsx`, ran a command and a build ("Ran command", "Build passes"), saved versions | Observed (shown in the Bolt chat) |
+| Bolt.new | A starter template that already listed `@supabase/supabase-js` in `package.json` | Installs npm packages and runs the dev server inside the browser (WebContainer); it can change any file in the project without asking | Assumed (inferred from the dependency it added and from the preview; not shown) |
+| Claude (claude.ai app) | Only the text of my Plan and Generate prompts in the chat | Answered with a plan and one code block; I saved the code myself as `code/original/booking_v1.py` | Observed |
+| Claude (claude.ai app) | The model and its version are shown in the app, the system prompt and sampling settings are not | Unknown internal limits on context and tools | Assumed |
+| Critique chat | The prompt with AC1-AC6, `booking.py` and `App.tsx` pasted in | No file or run access: it cited wrong line numbers and said "actual visual failure needs browser testing" | Observed (from its answer) |
 
 ### 9.3 Checkpoint and dependability
 
-**Safety checkpoint:** (write here)
+**Safety checkpoint:** Before accepting any AI change I read the diff of the files it touched, check that only the requested behaviour changed (no new dependency, no network, storage or login), rerun T1-T12 on the page and `python tests/check_sis.py`, and only then download and commit.
 
-**Reliability, security, responsibility:** (write here)
+**Reliability, security, responsibility:** The AI produced code that looked correct, but it also added a database client nobody asked for and left a stale result on screen, and the critique cited wrong line numbers. Reliability comes from tests I run, not from the AI's confidence. Security means watching what the tool may install or call. I submit the code, so the review, the permissions I give the tools and the final decision are my responsibility.
 
 ## 10. Reflection
 
@@ -234,7 +234,13 @@ Do NOT add login, accounts, a backend, a database, an external API, local storag
      recommendation you rejected or modified, and why; what you would improve next without
      expanding the scope. -->
 
-(write here)
+With Python I worked step by step: I asked the AI for a plan, then the code, then I tested it, so I could check the logic. With Bolt I only described the page and got the interface and code at once. It was faster, but harder to control every detail.
+
+Reliability risk: the page still showed "Available" after I turned on "Room blocked". A blocked room must always be unavailable, so I asked Bolt to clear the result when an input changes. Usability risk: users could not enter 24:00, and on a 320 px screen the time fields are cut. I added a midnight checkbox; the small-screen layout is still open. Security risk: Bolt added the Supabase database library without asking. The page stores nothing, so I removed it.
+
+AI can be wrong even when the code looks right, so a human must review the code, control tool permissions and run the tests. I am responsible for the result, not the AI.
+
+I rejected Bolt's "Add preset time buttons" because AC1-AC6 do not need them. Next, without new features, I would fix the narrow layout and make the messages clearer.
 
 ## 11. Appendix A — AI exchanges
 
@@ -369,22 +375,439 @@ The checks run in the order of the plan, and each one returns False as soon as i
 
 ### B3
 
-- **Tool:** (write here)
-- **Model:** (write here)
-- **Date:** (write here)
-- **Stage:** (write here)
-- **Source:** (write here)
+- **Tool:** ChatGPT (new chat)
+- **Model:** GPT-6
+- **Date:** 2026-10-22
+- **Stage:** Critique
+- **Source:** this SIS
 
 **Prompt:**
 
 ~~~~text
-(paste here)
+Review this Python function and this React page against the acceptance criteria below. For each of AC1-AC6 say whether it is satisfied, cite the exact line, and give concrete test inputs that would prove a defect. Do not suggest new features.
+
+Acceptance criteria:
+AC1 integer minutes after midnight, 0 <= start < end <= 1440; start strictly after now.
+AC2 duration at most 120 minutes; exactly 120 is permitted.
+AC3 reject every request when the room is blocked.
+AC4 reject overlap with any existing booking; touching at an endpoint is NOT overlap. Intervals include start and exclude end.
+AC5 an unambiguous Available / Unavailable result; never mutate existing bookings.
+AC6 understandable validation feedback; usable narrow/mobile layout.
+Contract: can_book(start, end, now, blocked, existing) returns True only when AC1-AC4 hold.
+
+=== code/booking.py ===
+DAY_END = 1440      # minutes in a day; a booking may end exactly at midnight (AC1)
+MAX_DURATION = 120  # minutes; exactly 120 is allowed (AC2)
+
+
+def _is_minute(value):
+    # bool is a subclass of int in Python, so exclude it explicitly
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def can_book(start, end, now, blocked, existing):
+    """Return True only when AC1-AC4 all hold. Never changes `existing`.
+
+    start, end - integer minutes after midnight, interval is [start, end)
+    now        - current minute (0-1439), the start must be strictly after it
+    blocked    - True when the selected room accepts no requests
+    existing   - collection of (start, end) pairs, read only
+    """
+    # AC3: a blocked room rejects every request
+    if blocked:
+        return False
+
+    # AC1: integer minutes, 0 <= start < end <= 1440, start strictly after now
+    if not (_is_minute(start) and _is_minute(end)):
+        return False
+    if not (0 <= start < end <= DAY_END):
+        return False
+    if start <= now:
+        return False
+
+    # AC2: at most 120 minutes
+    if end - start > MAX_DURATION:
+        return False
+
+    # AC4: [start, end) overlaps [b_start, b_end) only when each starts before the other ends;
+    # touching at an endpoint is not overlap
+    for b_start, b_end in existing:
+        if start < b_end and b_start < end:
+            return False
+
+    return True
+
+=== web/final/src/App.tsx ===
+import { useMemo, useState } from "react";
+import { Clock, DoorClosed, CheckCircle2, XCircle, Lock, Info, Calendar } from "lucide-react";
+
+type Booking = { start: number; end: number; label: string };
+
+const NOW = 9 * 60; // 09:00 fixed
+const ROOM = "Room 204";
+
+const PRIMARY_BOOKING: Booking = { start: 10 * 60, end: 11 * 60, label: "10:00 – 11:00" };
+const SECONDARY_BOOKING: Booking = { start: 11 * 60 + 40, end: 12 * 60 + 40, label: "11:40 – 12:40" };
+
+function toMinutes(time: string): number | null {
+  const m = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(time.trim());
+  if (!m) return null;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+
+function toHHMM(min: number): string {
+  const h = Math.floor(min / 60);
+  const mm = min % 60;
+  return `${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+}
+
+type Result =
+  | { status: "available" }
+  | { status: "unavailable"; reason: string };
+
+function checkAvailability(
+  start: number,
+  end: number,
+  blocked: boolean,
+  bookings: Booking[],
+): Result {
+  if (blocked) {
+    return { status: "unavailable", reason: `${ROOM} is currently blocked and cannot be booked.` };
+  }
+  if (start < 0 || end > 1440 || start >= end) {
+    return { status: "unavailable", reason: "Times must be valid: start before end, between 00:00 and 24:00." };
+  }
+  if (start <= NOW) {
+    return { status: "unavailable", reason: `Start time must be after the current time (${toHHMM(NOW)}).` };
+  }
+  if (end - start > 120) {
+    return { status: "unavailable", reason: `Booking duration is ${end - start} minutes. The maximum allowed is 120 minutes.` };
+  }
+  for (const b of bookings) {
+    // overlap if start < b.end && b.start < end; touching endpoints allowed
+    if (start < b.end && b.start < end) {
+      return { status: "unavailable", reason: `Overlaps an existing booking (${b.label}).` };
+    }
+  }
+  return { status: "available" };
+}
+
+export default function App() {
+  const [startTime, setStartTime] = useState("11:00");
+  const [endTime, setEndTime] = useState("12:00");
+  const [midnight, setMidnight] = useState(false);
+  const [includeSecond, setIncludeSecond] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const [result, setResult] = useState<Result | null>(null);
+
+  const bookings = useMemo<Booking[]>(
+    () => (includeSecond ? [PRIMARY_BOOKING, SECONDARY_BOOKING] : [PRIMARY_BOOKING]),
+    [includeSecond],
+  );
+
+  function handleCheck() {
+    const s = toMinutes(startTime);
+    if (s === null) {
+      setResult({ status: "unavailable", reason: "Please enter valid times in HH:MM format." });
+      return;
+    }
+    const e = midnight ? 1440 : toMinutes(endTime);
+    if (e === null) {
+      setResult({ status: "unavailable", reason: "Please enter valid times in HH:MM format." });
+      return;
+    }
+    setResult(checkAvailability(s, e, blocked, bookings));
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="mx-auto max-w-2xl px-4 py-8 sm:py-12">
+        {/* Header */}
+        <header className="mb-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-600 text-white shadow-sm">
+              <DoorClosed className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Smart Campus Room Availability Checker</h1>
+              <p className="text-sm text-slate-500">Check a room's availability before booking.</p>
+            </div>
+          </div>
+        </header>
+
+        {/* Room card */}
+        <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Calendar className="h-5 w-5 text-slate-400" />
+              <div>
+                <p className="text-sm font-medium text-slate-500">Selected room</p>
+                <p className="text-lg font-semibold">{ROOM}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5">
+              <Clock className="h-4 w-4 text-slate-500" />
+              <span className="text-sm font-medium text-slate-600">Current time: {toHHMM(NOW)}</span>
+            </div>
+          </div>
+
+          {/* Bookings today */}
+          <div className="mt-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Bookings today</p>
+            <ul className="space-y-2">
+              {bookings.map((b) => (
+                <li key={b.label} className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
+                  <span className="h-2 w-2 rounded-full bg-sky-500" />
+                  <span className="font-medium text-slate-700">{b.label}</span>
+                  <span className="text-slate-400">· booked</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* Controls card */}
+        <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-4 text-base font-semibold">Check a time slot</h2>
+
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium text-slate-600">Start time</span>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => {
+            setStartTime(e.target.value);
+            setResult(null);
+          }}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-base outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium text-slate-600">End time</span>
+              <input
+                type="time"
+                value={endTime}
+                disabled={midnight}
+                onChange={(e) => {
+            setEndTime(e.target.value);
+            setResult(null);
+          }}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-base outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 disabled:opacity-50"
+              />
+              <label className="mt-1.5 flex cursor-pointer items-center gap-2 text-xs text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={midnight}
+                  onChange={(e) => {
+                    setMidnight(e.target.checked);
+                    setResult(null);
+                  }}
+                  className="h-3.5 w-3.5 rounded border-slate-300 text-sky-600 focus:ring-sky-400"
+                />
+                Ends at midnight (24:00)
+              </label>
+            </label>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {/* Test data checkbox */}
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg bg-slate-50 p-3 transition hover:bg-slate-100">
+              <input
+                type="checkbox"
+                checked={includeSecond}
+                onChange={(e) => {
+            setIncludeSecond(e.target.checked);
+            setResult(null);
+          }}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-400"
+              />
+              <span className="text-sm text-slate-700">
+                Include test booking <span className="font-medium">11:40 – 12:40</span>
+              </span>
+            </label>
+
+            {/* Room blocked toggle */}
+            <div className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
+              <label htmlFor="blocked" className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <Lock className="h-4 w-4 text-slate-500" />
+                Room blocked
+              </label>
+              <button
+                id="blocked"
+                type="button"
+                role="switch"
+                aria-checked={blocked}
+                onClick={() => {
+            setBlocked((v) => !v);
+            setResult(null);
+          }}
+                className={`relative h-6 w-11 rounded-full transition-colors ${blocked ? "bg-rose-500" : "bg-slate-300"}`}
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${blocked ? "translate-x-5" : "translate-x-0.5"}`}
+                />
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleCheck}
+            className="mt-5 w-full rounded-lg bg-sky-600 px-4 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-700 active:scale-[0.99]"
+          >
+            Check availability
+          </button>
+        </section>
+
+        {/* Result */}
+        {result && (
+          <section
+            className={`rounded-2xl border p-5 shadow-sm transition ${
+              result.status === "available"
+                ? "border-emerald-200 bg-emerald-50"
+                : "border-rose-200 bg-rose-50"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              {result.status === "available" ? (
+                <CheckCircle2 className="mt-0.5 h-6 w-6 flex-shrink-0 text-emerald-600" />
+              ) : (
+                <XCircle className="mt-0.5 h-6 w-6 flex-shrink-0 text-rose-600" />
+              )}
+              <div>
+                <p
+                  className={`text-lg font-semibold ${result.status === "available" ? "text-emerald-700" : "text-rose-700"}`}
+                >
+                  {result.status === "available" ? "Available" : "Unavailable"}
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  {result.status === "available"
+                    ? `${ROOM} is free from ${startTime} to ${midnight ? "24:00" : endTime}. You can proceed to book it.`
+                    : result.reason}
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Helper note */}
+        <p className="mt-5 flex items-start gap-2 text-xs text-slate-400">
+          <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+          This tool only checks availability. It does not create, save, or confirm any booking.
+        </p>
+      </div>
+    </div>
+  );
+}
 ~~~~
 
 **Response:**
 
 ~~~~text
-(paste here)
+Code Review — AC1–AC6
+Overall: The Python function satisfies AC1–AC5 under the documented input assumptions. The React page has one clear AC6 issue with its mobile layout. AC1 also has a potential validation gap in Python because now is not validated.
+AC	Python	React
+AC1 — Valid times	Partially satisfied	Satisfied for UI inputs
+AC2 — Max 120 minutes	Pass	Pass
+AC3 — Blocked room	Pass	Pass
+AC4 — Booking overlap	Pass	Pass
+AC5 — Result and no mutation	Pass	Pass
+AC6 — Feedback and mobile	N/A	Partially satisfied
+
+AC1 — Valid integer times
+Python: Lines 35–40 validate start and end, but do not validate that now is an integer within 0–1439.
+
+Defect test:
+can_book(600, 660, -1, False, [])# Actual: True# Expected: False if now must be a valid minute after midnight
+
+
+
+React: Lines 66–69 parse valid HH:MM values. Lines 91–95 check the interval and require the start to be after NOW.
+
+Test: start 09:00, end 09:30 → Unavailable. Start 09:01, end 09:30 → Available.
+
+The fixed NOW = 09:00 on line 60 is a documented demo assumption, rather than necessarily a defect.
+AC2 — Maximum duration
+Satisfied in both.
+
+Python line 43 and React line 97 reject durations greater than 120 minutes.
+
+Tests:
+can_book(660, 780, 540, False, [])# True — exactly 120 minutescan_book(660, 781, 540, False, [])# False — 121 minutes
+
+
+
+No defect demonstrated.
+AC3 — Blocked room
+Satisfied in both.
+
+Python lines 30–32 and React lines 88–89 reject requests when blocked is true.
+
+Test:
+can_book(660, 720, 540, True, [])# False
+
+
+
+React test: enable Room blocked, choose 11:00–11:30, and press Check availability.
+
+Expected and actual: Unavailable.
+AC4 — Existing bookings
+Satisfied in both.
+
+Python lines 48–50 and React lines 100–103 correctly use:
+start < b_end and b_start < end
+
+
+
+Tests with existing booking (600, 660):
+Requested interval	Expected
+09:30–10:30	Unavailable
+10:30–11:30	Unavailable
+11:00–11:30	Available
+09:00–10:00	Unavailable if starting now; otherwise touching is allowed
+
+The interval 11:00–11:30 touches the existing booking's ending boundary without overlapping.
+
+No defect demonstrated.
+AC5 — Clear result and no mutation
+Satisfied in both.
+
+Python line 52 returns True when all checks pass. Lines 31–50 return False when a rule fails.
+
+React line 296 displays either Available or Unavailable.
+
+React lines 117–119 build the displayed booking list without changing the original bookings. The checker only reads that list.
+
+Mutation test:
+existing = [(600, 660)]before = existing.copy()can_book(660, 720, 540, False, existing)assert existing == before
+
+
+
+Expected: assertion passes.
+AC6 — Validation feedback and mobile layout
+Partially satisfied in React.
+
+Validation messages are understandable:
+- Lines 124–130: invalid time format.
+- Lines 91–98: invalid interval, past start or excessive duration.
+- Lines 100–103: overlapping booking.
+- Lines 278–302: visible result and explanation.
+Defect: Line 187 uses:
+<div className="grid grid-cols-2 gap-4">
+
+
+This forces two columns even on narrow mobile screens.
+
+Concrete test: open the page in browser developer tools with a 320px viewport, inspect the Start time and End time controls, and check whether the labels, time inputs and midnight checkbox fit without clipping or overflow.
+
+The code shows a potential narrow-screen usability issue, but actual visual failure needs browser testing.
+
+Conclusion
+The backend and frontend implement the main booking rules consistently for normal inputs. The review identifies two points requiring attention:
+1. Python AC1: now is not type- or range-validated (lines 34–40). Whether this is a contract defect depends on whether callers must already supply a valid now.
+2. React AC6: The two-column time-input layout is not responsive at narrow widths (line 187). Actual overflow should be confirmed in a mobile viewport.
+No defects were demonstrated for AC2–AC5. The code also correctly permits bookings lasting exactly 120 minutes and bookings that touch existing reservation endpoints without overlapping.
 ~~~~
 
 ### B4
@@ -475,4 +898,9 @@ OK
 
 | Check ID or limitation | Why it stays | What I would do next |
 | --- | --- | --- |
-| (write here) | (write here) | (write here) |
+| Checker: all 55 checks PASS | Nothing to declare under known_fails | - |
+| Order of work: the Bolt part was done before the baseline commit | The Bolt prompt, v1, the repairs and the page tests (sections 4-7) were made before I wrote and committed section 2; the Python Plan and Generate exchanges came after the baseline commit | Next time write and push section 2 first, before opening Bolt |
+| T9 on the page is Not testable | A `type="time"` input stops at 23:59 and the "Ends at midnight" checkbox gives exactly 24:00, so an end of 24:01 (1441) cannot be entered; the Python function rejects it (T9 False) | Nothing in scope - the input itself prevents the invalid value |
+| Time inputs are clipped below ~375 px (critique claim 2) | At 320 px the two-column grid leaves each time input 113 px wide and the text is cut to "11:00 A" (evidence/final-cases/critique-320px.png); at 375 px, the AC6 target (T12), it is fine | One focused prompt: use `grid-cols-1 sm:grid-cols-2` for the two time inputs |
+| The Available text still says "You can proceed to book it." | The page never books anything (the footer says so), but this sentence suggests a next step that does not exist | One focused prompt: change the text to "Room 204 is free from HH:MM to HH:MM." and nothing else |
+| The "Ends at midnight" checkbox sits inside the End time `<label>` | The end time input's accessible name becomes "End time Ends at midnight (24:00)"; found while scripting the final run, it changes no result | Move the checkbox out of the End time label so each control has its own name |
