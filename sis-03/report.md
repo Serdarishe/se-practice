@@ -13,13 +13,13 @@
 
 | Item | Value |
 | --- | --- |
-| Coding assistant (tool) | (write here) |
-| Coding assistant model | (write here) |
+| Coding assistant (tool) | Claude (claude.ai app) |
+| Coding assistant model | claude-opus-5-5 |
 | Bolt.new model | not displayed |
 | Bolt project link | https://bolt.new/~/sb1-naz8xqvv |
 | Language | Python |
 | Path | A |
-| Python v1 from | (write here) |
+| Python v1 from | fresh |
 | Web v1 from | fresh |
 
 ## 2. Baseline — before any new AI exchange
@@ -78,10 +78,14 @@
 
 | Branch in v1 (quoted) | AC | Satisfies it? | Why |
 | --- | --- | --- | --- |
-| (write here) | (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) | (write here) |
+| `if blocked: return False` | AC3 | Yes | It is the first check, so a blocked room is rejected even when the time is free (T3 False). |
+| `for value in (start, end): if not isinstance(value, int) or isinstance(value, bool): return False` | AC1 | Yes | Only whole minutes pass; `True`/`False` are excluded although `bool` is a subclass of `int`. It returns False instead of raising, as the contract asks. |
+| `if not (0 <= start < end <= 1440): return False` | AC1 | Yes | One chained comparison rejects negative start, zero length (700-700), reversed times (T7) and ending after midnight (T9), and still allows ending exactly at 1440 (T8 True). |
+| `if start <= now: return False` | AC1 | Yes | `<=` rejects a start equal to now (T6 False); 541 with now 540 passes. |
+| `if end - start > 120: return False` | AC2 | Yes | Strict `>` keeps exactly 120 allowed (T4 True) and rejects 121 (T5 False). |
+| `for b_start, b_end in existing: if start < b_end and b_start < end: return False` | AC4, AC5 | Yes | Half-open overlap test: touching endpoints make one side false, so T1 is True and T2 is False; the loop checks every booking (T10 False) and only reads `existing`, so it is never changed (T11 True twice). |
+
+v1 was already correct: it gives the expected result on T1-T11, and my 28-test suite is green on it too (`python -m unittest` with v1 copied as `booking.py`: `Ran 28 tests ... OK`). The final `code/booking.py` keeps the same checks and only names the constants (`DAY_END`, `MAX_DURATION`) and moves the integer check into `_is_minute()`, so v1 and final give the same results.
 
 ## 4. Prototype v1 in Bolt.new
 
@@ -134,17 +138,17 @@ Do NOT add login, accounts, a backend, a database, an external API, local storag
 
 | Case | Name | Input | Expected | Python v1 | Python final | Page v1 | Page final |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| T1 | Touching | 660–720 | Available |  | True | Available | Available |
-| T2 | Overlap | 630–690 | Unavailable |  | False | Unavailable | Unavailable |
-| T3 | Blocked | 660–720, blocked | Unavailable |  | False | Unavailable | Unavailable |
-| T4 | Exactly 120 min | 720–840 | Available |  | True | Available | Available |
-| T5 | 121 min | 720–841 | Unavailable |  | False | Unavailable | Unavailable |
-| T6 | Starts now | 540–570 | Unavailable |  | False | Unavailable | Unavailable |
-| T7 | Reversed | 720–660 | Unavailable |  | False | Unavailable | Unavailable |
-| T8 | Ends at midnight | 1380–1440 | Available |  | True | Not testable | Available |
-| T9 | Past midnight | 1380–1441 | Unavailable |  | False | Not testable | Not testable |
-| T10 | Second booking | 720–780, existing (600–660), (700–760) | Unavailable |  | False | Unavailable | Unavailable |
-| T11 | Same check twice | 660–720, twice | Available |  | True | Available | Available |
+| T1 | Touching | 660–720 | Available | True | True | Available | Available |
+| T2 | Overlap | 630–690 | Unavailable | False | False | Unavailable | Unavailable |
+| T3 | Blocked | 660–720, blocked | Unavailable | False | False | Unavailable | Unavailable |
+| T4 | Exactly 120 min | 720–840 | Available | True | True | Available | Available |
+| T5 | 121 min | 720–841 | Unavailable | False | False | Unavailable | Unavailable |
+| T6 | Starts now | 540–570 | Unavailable | False | False | Unavailable | Unavailable |
+| T7 | Reversed | 720–660 | Unavailable | False | False | Unavailable | Unavailable |
+| T8 | Ends at midnight | 1380–1440 | Available | True | True | Not testable | Available |
+| T9 | Past midnight | 1380–1441 | Unavailable | False | False | Not testable | Not testable |
+| T10 | Second booking | 720–780, existing (600–660), (700–760) | Unavailable | False | False | Unavailable | Unavailable |
+| T11 | Same check twice | 660–720, twice | Available | True | True | Available | Available |
 | T12 | Narrow screen | T1 at ~375 px wide | Available | n/a | n/a | Available | Available |
 
 **How the page cases were run:** v1 - every case was entered by hand in the Bolt preview (screenshots in `evidence/v1-cases/`, T12 in Chrome DevTools as iPhone SE 375x667) and repeated on the exported code in Chromium with a Playwright script; both runs gave the same results. Final - the downloaded `web/final/` code was started with `npm run dev` and every case was entered in Chromium with the same Playwright script (a fresh page per case; screenshots in `evidence/final-cases/`); T8 and T12 were also checked by hand in the Bolt preview (`T8.png`, `T12-bolt-devtools.png`). On v1, T8 and T9 are Not testable: a `type="time"` input does not accept 24:00 or 24:01; the nearest input 23:00-00:00 showed Unavailable ("start before end"). On the final, T8 uses the new "Ends at midnight (24:00)" checkbox (issue 3); T9 (24:01) still cannot be entered. Python results come from the checker run of each file.
@@ -156,11 +160,11 @@ Do NOT add login, accounts, a backend, a database, an external API, local storag
 
 | AC | Implementation / file | Test input | Expected | v1 actual | Final actual |
 | --- | --- | --- | --- | --- | --- |
-| AC1 | `code/booking.py` lines 23-28 (integer check, `0 <= start < end <= DAY_END`, `start <= now`); page: `web/final/src/App.tsx` `checkAvailability` (`start < 0 || end > 1440 || start >= end`, `start <= NOW`) and the "Ends at midnight" checkbox (end = 1440) | T6, T7, T8, T9 | T8 Available; T6, T7, T9 Unavailable | Python v1 (write here); page: T6, T7 Unavailable, T8, T9 Not testable | Python: T6 False, T7 False, T8 True, T9 False; page: T6, T7 Unavailable, T8 Available, T9 Not testable |
-| AC2 | `code/booking.py` line 31 (`end - start > MAX_DURATION`); page: `web/final/src/App.tsx` `end - start > 120` | T4, T5 | T4 Available; T5 Unavailable | Python v1 (write here); page: T4 Available, T5 Unavailable | Python: T4 True, T5 False; page: T4 Available, T5 Unavailable |
-| AC3 | `code/booking.py` line 19 (`if blocked`); page: `web/final/src/App.tsx` `if (blocked)` first in `checkAvailability` | T3 | Unavailable | Python v1 (write here); page: T3 Unavailable, but a stale Available stayed after switching Blocked on (issue 1) | Python: T3 False; page: T3 Unavailable, stale result cleared |
-| AC4 | `code/booking.py` lines 36-38 (`start < b_end and b_start < end`); page: `web/final/src/App.tsx` loop `start < b.end && b.start < end` | T1, T2, T10 | T1 Available; T2, T10 Unavailable | Python v1 (write here); page: T1 Available, T2, T10 Unavailable | Python: T1 True, T2 False, T10 False; page: T1 Available, T2, T10 Unavailable |
-| AC5 | `code/booking.py` returns only `True`/`False`, reads `existing` without changing it; page: `web/final/src/App.tsx` result card shows only "Available"/"Unavailable"; bookings are constants; `setResult(null)` on every input change | T11, T1-T10 (one clear result each) | T11 Available on the second check too; existing unchanged | Python v1 (write here); page: T11 Available twice, but the result did not follow input changes (issue 1) | Python: T11 True, existing unchanged (tests); page: T11 Available twice, result cleared on change |
+| AC1 | `code/booking.py` lines 23-28 (integer check, `0 <= start < end <= DAY_END`, `start <= now`); page: `web/final/src/App.tsx` `checkAvailability` (`start < 0`, `end > 1440`, `start >= end`, `start <= NOW`) and the "Ends at midnight" checkbox (end = 1440) | T6, T7, T8, T9 | T8 Available; T6, T7, T9 Unavailable | Python v1: T6 False, T7 False, T8 True, T9 False; page: T6, T7 Unavailable, T8, T9 Not testable | Python: T6 False, T7 False, T8 True, T9 False; page: T6, T7 Unavailable, T8 Available, T9 Not testable |
+| AC2 | `code/booking.py` line 31 (`end - start > MAX_DURATION`); page: `web/final/src/App.tsx` `end - start > 120` | T4, T5 | T4 Available; T5 Unavailable | Python v1: T4 True, T5 False; page: T4 Available, T5 Unavailable | Python: T4 True, T5 False; page: T4 Available, T5 Unavailable |
+| AC3 | `code/booking.py` line 19 (`if blocked`); page: `web/final/src/App.tsx` `if (blocked)` first in `checkAvailability` | T3 | Unavailable | Python v1: T3 False; page: T3 Unavailable, but a stale Available stayed after switching Blocked on (issue 1) | Python: T3 False; page: T3 Unavailable, stale result cleared |
+| AC4 | `code/booking.py` lines 36-38 (`start < b_end and b_start < end`); page: `web/final/src/App.tsx` loop `start < b.end && b.start < end` | T1, T2, T10 | T1 Available; T2, T10 Unavailable | Python v1: T1 True, T2 False, T10 False; page: T1 Available, T2, T10 Unavailable | Python: T1 True, T2 False, T10 False; page: T1 Available, T2, T10 Unavailable |
+| AC5 | `code/booking.py` returns only `True`/`False`, reads `existing` without changing it; page: `web/final/src/App.tsx` result card shows only "Available"/"Unavailable"; bookings are constants; `setResult(null)` on every input change | T11, T1-T10 (one clear result each) | T11 Available on the second check too; existing unchanged | Python v1: T11 True, existing unchanged; page: T11 Available twice, but the result did not follow input changes (issue 1) | Python: T11 True, existing unchanged (tests); page: T11 Available twice, result cleared on change |
 | AC6 | page only: `web/final/src/App.tsx` reason text in the result card; Tailwind layout `max-w-2xl px-4`, `grid-cols-2`, `flex-wrap` | T12, T7 (feedback for reversed times) | T12 Available and readable at ~375 px; T7 shows a clear message | page: reasons shown (e.g. T7 "Times must be valid: start before end"); T12 Available, no horizontal scroll at 375 px | page: same reasons; T12 Available, scrollWidth 375 at 375 px (evidence/final-narrow.png) |
 
 ## 7. Issue log
@@ -243,42 +247,124 @@ Do NOT add login, accounts, a backend, a database, an external API, local storag
 
 ### B1
 
-- **Tool:** (write here)
-- **Model:** (write here)
-- **Date:** (write here)
-- **Stage:** (write here)
-- **Source:** (write here)
+- **Tool:** Claude (claude.ai app)
+- **Model:** claude-opus-5-5
+- **Date:** 2026-10-22
+- **Stage:** Plan
+- **Source:** this SIS
 
 **Prompt:**
 
 ~~~~text
-(paste here)
+I am implementing a Python function can_book(start, end, now, blocked, existing) for a Smart Campus Room Availability Checker. Do not write code yet. Give me a short plan: the checks in order, your assumptions, and boundary tests. The rules are fixed:
+AC1 integer minutes after midnight, 0 <= start < end <= 1440, start strictly after now.
+AC2 duration at most 120 minutes, exactly 120 is allowed.
+AC3 reject every request when the room is blocked.
+AC4 reject overlap with any existing (start, end) booking; touching at an endpoint is not overlap. Intervals include start and exclude end.
+AC5 return only True or False and never modify existing.
+Return True only when AC1-AC4 all hold.
 ~~~~
 
 **Response:**
 
 ~~~~text
-(paste here)
+Plan for `can_book(start, end, now, blocked, existing)`
+
+**Checks, in order (return False at the first one that fails):**
+
+1. **AC3 - blocked room.** If `blocked` is True, return False right away. A blocked room rejects every request, so nothing else matters.
+2. **AC1 - integer minutes.** `start` and `end` must be integers. Exclude `bool` (in Python `True` is also an `int`). If they are not integers, return False rather than raising, because the contract says to return a Boolean.
+3. **AC1 - day bounds and order.** Require `0 <= start < end <= 1440`. This one chained comparison rejects negative times, zero-length and reversed intervals, and anything ending after midnight.
+4. **AC1 - start in the future.** Require `start > now` (strictly). `start == now` is rejected.
+5. **AC2 - duration.** Require `end - start <= 120`. Exactly 120 passes, 121 fails.
+6. **AC4 - overlap.** For every `(b_start, b_end)` in `existing`, half-open intervals `[start, end)` and `[b_start, b_end)` overlap only when `start < b_end and b_start < end`. If any booking overlaps, return False. Touching (`start == b_end` or `end == b_start`) makes one of the comparisons false, so it is allowed.
+7. If every check passes, return True.
+
+**AC5:** only iterate over `existing`. Never sort it, append to it or remove from it, and never assign to its elements. Return the literals `True` and `False`, not truthy values.
+
+**Assumptions:**
+- `now` is a valid minute (0-1439), as the brief says, so it is not validated.
+- The pairs in `existing` are valid `(start, end)` tuples with `start < end`. They may be unsorted, and the list may be empty.
+- All times are on the same day. Nothing wraps past midnight.
+- Invalid input gives False, not an exception.
+- Standard library only, no extra helpers outside the contract.
+
+**Boundary tests (base: now = 540, blocked = False, existing = [(600, 660)]):**
+
+| Case | Input | Expected |
+| --- | --- | --- |
+| Touching after | 660-720 | True |
+| Touching before | 570-600 | True |
+| Partial overlap | 630-690 | False |
+| Inside / containing / identical | 615-645, 570-690, 600-660 | False |
+| Blocked | 660-720, blocked = True | False |
+| Exactly 120 | 720-840 | True |
+| 121 minutes | 720-841 | False |
+| Starts now | 540-570 | False |
+| One minute after now | 541-571 | True |
+| Reversed / zero length | 720-660, 700-700 | False |
+| Ends at 1440 / after 1440 | 1380-1440 / 1380-1441 | True / False |
+| Negative start | -30 to 30 | False |
+| Second booking overlaps | 720-780, existing [(600,660),(700,760)] | False |
+| Unsorted list | 610-650, existing [(900,960),(600,660)] | False |
+| Empty list | 600-660, existing [] | True |
+| Same call twice, list unchanged | 660-720 twice | True both times, `existing` equal before and after |
+| Return type | any case | `type(result) is bool` |
+
+If this plan works for you, approve it and I will write the function.
 ~~~~
 
 ### B2
 
-- **Tool:** (write here)
-- **Model:** (write here)
-- **Date:** (write here)
-- **Stage:** (write here)
-- **Source:** (write here)
+- **Tool:** Claude (claude.ai app)
+- **Model:** claude-opus-5-5
+- **Date:** 2026-10-22
+- **Stage:** Generate
+- **Source:** this SIS
 
 **Prompt:**
 
 ~~~~text
-(paste here)
+I approve the plan. Now write can_book(start, end, now, blocked, existing) in Python using only the standard library. Keep the signature exactly as given, return True or False, do not change existing, and add nothing beyond AC1-AC4. Give the whole function in one code block.
 ~~~~
 
 **Response:**
 
 ~~~~text
-(paste here)
+```python
+def can_book(start, end, now, blocked, existing):
+    """Return True only when the request satisfies AC1-AC4; never modifies existing."""
+    # AC3: a blocked room rejects every request
+    if blocked:
+        return False
+
+    # AC1: integer minutes (bool is excluded, it is a subclass of int)
+    for value in (start, end):
+        if not isinstance(value, int) or isinstance(value, bool):
+            return False
+
+    # AC1: inside the day and in the right order
+    if not (0 <= start < end <= 1440):
+        return False
+
+    # AC1: the start must be strictly after now
+    if start <= now:
+        return False
+
+    # AC2: at most 120 minutes, exactly 120 is allowed
+    if end - start > 120:
+        return False
+
+    # AC4: half-open intervals [start, end) and [b_start, b_end) overlap
+    # only when each one starts before the other ends; touching is allowed
+    for b_start, b_end in existing:
+        if start < b_end and b_start < end:
+            return False
+
+    return True
+```
+
+The checks run in the order of the plan, and each one returns False as soon as it fails. `existing` is only read in the `for` loop, never sorted or changed, and the function returns only the literals `True` and `False`.
 ~~~~
 
 ### B3
