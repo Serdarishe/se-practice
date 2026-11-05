@@ -1141,12 +1141,12 @@ Use the same IDs as `known_fails` in `submission.yml`. Write `none` if the run i
 
 | Check | Why it stays |
 | --- | --- |
-| | |
+| none | `python tests/check_debugging.py` gives 31 PASS / 0 FAIL / 0 ERROR (run with no `node_modules/` in `app/`, as in a fresh clone) |
 
 ### 9.2 One limitation of AI-assisted debugging
 
 <!-- Use something that actually happened in sections 5-8. 20 words or more. -->
--
+- The chat with the skill wrote "Ran 2 commands", but it did not show which commands it ran. So we could not fully trust this result, and we had to run the tests ourselves.
 
 ---
 
@@ -1161,3 +1161,8 @@ Use the same IDs as `known_fails` in `submission.yml`. Write `none` if the run i
      visible after the BUG-A patch: the AC5 test had been failing for the wrong reason." -->
 
 <!-- Write your conclusion below this line -->
+
+(a) The skill helped, although both chats found the two bugs and proposed the same fix. The chat with the skill proposed a correct test for BUG-B (700-760), while the test without the skill (660-720) failed first because of BUG-A. Also, the skill separated the unconfirmed hypotheses.
+
+(b) Our tests showed that BUG-B really existed: the test failed before the fix and passed after removing `push`. However, the result 25/25 does not prove that the user interface works correctly (AC6).
+
