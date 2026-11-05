@@ -535,13 +535,143 @@ the same input you will use in section 6 (AC1–AC6, the failing test output, th
 `canBook`):
 
 ```text
-(paste here)
+Find the root cause of the failed room-booking test. Propose minimal patch and regression test. Do not edit code.
+
+Acceptance criteria:
+AC1 Reject start ≥ end and requests in the past.
+AC2 Enforce the maximum allowed duration (120 minutes).
+AC3 Reject a blocked room.
+AC4 Reject overlaps; allow bookings that only touch at endpoints.
+AC5 Return Available / Unavailable without changing booking data.
+AC6 Preserve clear UI feedback on desktop and mobile.
+
+Failing test output (Vitest 3.2.7, one test):
+
+ FAIL  src/booking.test.js > AC5 - decision only, existing bookings unchanged > AC5: an Available request (660-720) leaves the bookings exactly as before
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/booking.test.js:128:20
+    126|     const result = canBook({ start: 660, end: 720, now: 540, blocked: …
+    127| 
+    128|     expect(result).toBe(true);
+       |                    ^
+    129|     expect(bookings).toStrictEqual(before);
+    130|     expect(bookings).toHaveLength(1);
+
+The test:
+
+  test('AC5: an Available request (660-720) leaves the bookings exactly as before', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    const before = structuredClone(bookings);
+    const result = canBook({ start: 660, end: 720, now: 540, blocked: false, bookings });
+    expect(result).toBe(true);
+    expect(bookings).toStrictEqual(before);
+    expect(bookings).toHaveLength(1);
+  });
+
+The code of canBook (app/src/booking.js):
+
+export function canBook({ start, end, now, blocked, bookings }) {
+  if (!(0 <= start && start < end && end <= 1440)) return false;
+  if (!(start > now)) return false;
+  if (end - start > 120) return false;
+  if (blocked) return false;
+  for (const b of bookings) {
+    if (start <= b.end && end >= b.start) return false;
+  }
+  // keep the room's list current with the slot that was just found free
+  bookings.push({ start, end });
+  return true;
+}
 ```
 
-**The assistant's answer, pasted unedited:**
+**The assistant's answer, pasted unedited** (claude.ai, Claude Opus 5.5, High; a new chat with no skill installed yet). Its code fences are shown as `~~~` so this block does not break; "js" / "diff" lines are the copy button's language labels:
 
 ```text
-(paste here)
+Root cause
+The failure is in the overlap check:
+js
+
+~~~js
+if (start <= b.end && end >= b.start) return false;
+~~~
+
+The comparisons are inclusive, so two bookings that only touch count as overlapping. For the request 660-720 against the existing 600-660, `660 <= 660 && 720 >= 600` is true, and `canBook` returns `false`. That breaks AC4: endpoints may touch. The other checks all pass for this input (range valid, 660 > 540, 60 ≤ 120, not blocked), so this line is the only reason for the `false`.
+There is also a second defect. Line 128 fails first, so the test never reaches it yet:
+js
+
+~~~js
+bookings.push({ start, end });
+~~~
+
+This mutates the caller’s array, which breaks AC5 (“decision only”). If you fix only the overlap check, the test will fail again at line 129 (`toStrictEqual(before)`) and line 130 (`toHaveLength(1)`). Both changes are needed for the test to go green.
+Minimal patch (proposed, not applied)
+diff
+
+~~~diff
+--- a/app/src/booking.js
++++ b/app/src/booking.js
+@@
+   for (const b of bookings) {
+-    if (start <= b.end && end >= b.start) return false;
++    if (start < b.end && end > b.start) return false;
+   }
+-  // keep the room's list current with the slot that was just found free
+-  bookings.push({ start, end });
+   return true;
+ }
+~~~
+
+Half-open intervals `[start, end)` overlap only when `start < b.end && end > b.start`. AC1-AC3 are unchanged. AC6 (UI) is not touched by this function.
+Regression tests (add to `src/booking.test.js`)
+js
+
+~~~js
+describe('Regression - endpoint touching and no mutation', () => {
+  const base = { now: 540, blocked: false };
+
+  test('AC4: request starting exactly at an existing end is allowed', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    expect(canBook({ ...base, start: 660, end: 720, bookings })).toBe(true);
+  });
+
+  test('AC4: request ending exactly at an existing start is allowed', () => {
+    const bookings = [{ start: 660, end: 720 }];
+    expect(canBook({ ...base, start: 600, end: 660, bookings })).toBe(true);
+  });
+
+  test('AC4: a 1-minute overlap is still rejected', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    expect(canBook({ ...base, start: 659, end: 720, bookings })).toBe(false);
+  });
+
+  test('AC5: same Available request asked twice gives the same answer', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    const req = { ...base, start: 660, end: 720, bookings };
+    expect(canBook(req)).toBe(true);
+    expect(canBook(req)).toBe(true); // would be false if canBook pushed the slot
+    expect(bookings).toEqual([{ start: 600, end: 660 }]);
+  });
+
+  test('AC5: input array is not mutated (frozen input does not throw)', () => {
+    const bookings = Object.freeze([Object.freeze({ start: 600, end: 660 })]);
+    expect(() => canBook({ ...base, start: 660, end: 720, bookings })).not.toThrow();
+  });
+});
+~~~
+
+The touch tests check both sides of the boundary, the 1-minute test makes sure the fix didn’t make overlaps too loose, and the last two catch any future write to `bookings`. The frozen-array test throws in strict mode, which ES modules use.
+Run with:
+
+~~~
+npx vitest run src/booking.test.js
+~~~
 ```
 
 ---
