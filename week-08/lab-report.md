@@ -1090,8 +1090,45 @@ AssertionError: expected [ { start: 600, end: 660 }, …(1) ] to strictly equal 
 
 The change as a diff, then the real output of the **full** suite. Every test must pass.
 
+I deleted the `push` line and the comment above it, because the comment only described the push. In code lines this is one deleted line (the checker ignores comments).
+
 ```text
-(paste here)
+$ git diff app/src/booking.js
+diff --git a/week-08/app/src/booking.js b/week-08/app/src/booking.js
+index 9c617df..5515ae9 100644
+--- a/week-08/app/src/booking.js
++++ b/week-08/app/src/booking.js
+@@ -11,7 +11,5 @@ export function canBook({ start, end, now, blocked, bookings }) {
+   for (const b of bookings) {
+     if (start < b.end && end > b.start) return false;
+   }
+-  // keep the room's list current with the slot that was just found free
+-  bookings.push({ start, end });
+   return true;
+ }
+
+$ npx vitest run -t "BUG-B"
+
+ RUN  v3.2.7 /home/claude/se-practice/week-08/app
+
+ ✓ src/booking.test.js (25 tests | 24 skipped) 13ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 24 skipped (25)
+   Start at  20:50:05
+   Duration  410ms (transform 74ms, setup 0ms, collect 55ms, tests 13ms, environment 0ms, prepare 109ms)
+
+
+$ npx vitest run   (full suite)
+
+ RUN  v3.2.7 /home/claude/se-practice/week-08/app
+
+ ✓ src/booking.test.js (25 tests) 13ms
+
+ Test Files  1 passed (1)
+      Tests  25 passed (25)
+   Start at  20:50:07
+   Duration  442ms (transform 50ms, setup 0ms, collect 52ms, tests 13ms, environment 0ms, prepare 100ms)
 ```
 
 ---
