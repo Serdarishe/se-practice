@@ -684,16 +684,126 @@ npx vitest run src/booking.test.js
 Only the question changes, to the deck's skill question:
 
 ```text
-(paste here)
+Use the bug-detector skill to diagnose the failed room-booking test.
+
+Acceptance criteria:
+AC1 Reject start ≥ end and requests in the past.
+AC2 Enforce the maximum allowed duration (120 minutes).
+AC3 Reject a blocked room.
+AC4 Reject overlaps; allow bookings that only touch at endpoints.
+AC5 Return Available / Unavailable without changing booking data.
+AC6 Preserve clear UI feedback on desktop and mobile.
+
+Failing test output (Vitest 3.2.7, one test):
+
+ FAIL  src/booking.test.js > AC5 - decision only, existing bookings unchanged > AC5: an Available request (660-720) leaves the bookings exactly as before
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/booking.test.js:128:20
+    126|     const result = canBook({ start: 660, end: 720, now: 540, blocked: …
+    127| 
+    128|     expect(result).toBe(true);
+       |                    ^
+    129|     expect(bookings).toStrictEqual(before);
+    130|     expect(bookings).toHaveLength(1);
+
+The test:
+
+  test('AC5: an Available request (660-720) leaves the bookings exactly as before', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    const before = structuredClone(bookings);
+    const result = canBook({ start: 660, end: 720, now: 540, blocked: false, bookings });
+    expect(result).toBe(true);
+    expect(bookings).toStrictEqual(before);
+    expect(bookings).toHaveLength(1);
+  });
+
+The code of canBook (app/src/booking.js):
+
+export function canBook({ start, end, now, blocked, bookings }) {
+  if (!(0 <= start && start < end && end <= 1440)) return false;
+  if (!(start > now)) return false;
+  if (end - start > 120) return false;
+  if (blocked) return false;
+  for (const b of bookings) {
+    if (start <= b.end && end >= b.start) return false;
+  }
+  // keep the room's list current with the slot that was just found free
+  bookings.push({ start, end });
+  return true;
+}
 ```
 
-**The assistant's answer, pasted unedited:**
+**The assistant's answer, pasted unedited** (claude.ai, Claude Opus 5.5, High, a new chat with bug-detector enabled; the table and code lost their formatting in the copy, "js" lines are the copy button's language labels):
 
 ```text
-(paste here)
+Loaded skill
+I’ll reproduce the failure with the exact inputs, then check whether a second defect is hiding behind it.
+
+Ran 2 commands
+Reproduced. There are two confirmed defects, and the test only shows the first one because it fails before reaching the second.
+
+Repro results (bookings = [600-660]):
+
+Request	Expected	Got	Bookings after
+660-720 (touches end)	true	false ❌	unchanged
+540-600 (touches start)	true	false ❌	unchanged
+700-760 (clear gap)	true	true	[600-660, 700-760] ❌
+Defect 1 - touching bookings rejected (AC4)
+Evidence: 660-720 vs 600-660 returns false; same for 540-600. This is the failure at booking.test.js:128.
+Root cause: overlap check uses inclusive comparisons:
+js
+  if (start <= b.end && end >= b.start) return false;
+660 <= 660 is true, so a shared endpoint counts as overlap.
+
+Fix: strict comparisons (half-open intervals):
+js
+  if (start < b.end && end > b.start) return false;
+Defect 2 - canBook mutates the bookings array (AC5)
+Evidence: 700-760 returns true but the caller’s array grows to 2 items. Calling canBook twice with the same input returns true then false.
+Root cause: these lines:
+js
+  // keep the room's list current with the slot that was just found free
+  bookings.push({ start, end });
+A check function is doing a write. AC5 says “decision only, without changing booking data”.
+
+Fix: delete both lines. Saving the booking should happen in a separate function, only after the user confirms.
+Note: fixing only Defect 1 will not make the test pass. Line 128 will pass, then line 129 (toStrictEqual(before)) fails because of the push. Both fixes are needed.
+Hypotheses (not confirmed)
+AC6 (UI feedback on desktop/mobile) can’t be judged from this code; need the UI component.
+If the UI currently relies on the push to update the list, removing it may make that UI stop showing new bookings. Worth checking callers before the fix.
+Proposed regression tests
+js
+test('AC4: touching at either endpoint is allowed', () => {
+  const bookings = [{ start: 600, end: 660 }];
+  expect(canBook({ start: 660, end: 720, now: 540, blocked: false, bookings })).toBe(true);
+  expect(canBook({ start: 540, end: 600, now: 500, blocked: false, bookings })).toBe(true);
+});
+
+test('AC4: real overlap is still rejected', () => {
+  const bookings = [{ start: 600, end: 660 }];
+  expect(canBook({ start: 630, end: 690, now: 540, blocked: false, bookings })).toBe(false);
+  expect(canBook({ start: 600, end: 660, now: 540, blocked: false, bookings })).toBe(false);
+});
+
+test('AC5: same request twice gives the same answer, no mutation', () => {
+  const bookings = [{ start: 600, end: 660 }];
+  const before = structuredClone(bookings);
+  const args = { start: 700, end: 760, now: 540, blocked: false, bookings };
+  expect(canBook(args)).toBe(true);
+  expect(canBook(args)).toBe(true);
+  expect(bookings).toStrictEqual(before);
+});
+Expected after both fixes: the original AC5 test and all three new tests pass. I haven’t edited booking.js yet; say the word and I’ll apply both fixes.
 ```
 
-Did the environment show that the skill was invoked? yes / no / not shown
+Did the environment show that the skill was invoked? yes - the chat showed "Loaded skill" at the top of the answer, then "Ran 2 commands" (the assistant ran code in its own sandbox; it did not edit my files)
 
 ---
 
@@ -704,15 +814,16 @@ tests showed. Write a short verdict in each cell, and give a reason where they d
 
 | Criterion | No skill | With skill |
 | --- | --- | --- |
-| Correct root cause | | |
-| Reproducible test | | |
-| Minimal proposed patch | | |
-| Unsupported claims | | |
-| Clarity of explanation | | |
+| Correct root cause | Correct for both: the inclusive `<=`/`>=` overlap line (BUG-A, `660 <= 660`) and `bookings.push` (BUG-B, AC5). It also saw that the test stops at line 128, so BUG-B is hidden behind BUG-A. | Correct for both, the same two lines. Plus a repro table I checked with node on `buggy/booking.js`: 660-720 false, 700-760 true then false, bookings grow to 2. All true. |
+| Reproducible test | Weak for BUG-B: its two AC5 tests use 660-720, which touches the booking, so on the buggy code BUG-A rejects them before the push. They fail for the wrong reason, like my Week 07 AC5 test. The AC4 touch tests and the 1-minute overlap test are good. | Better for BUG-B: its AC5 test uses 700-760, which touches nothing, so it fails only because of the push - the same idea as my BUG-B test (720-780). The AC4 tests are fine; the second one uses now 500 so 540-600 is not rejected by AC1. |
+| Minimal proposed patch | `<=` → `<`, `>=` → `>` in one line, and delete the push line with its comment. Minimal, and it is what I applied (section 8). Proposed only, as asked. | The same two changes. Also proposed only, but it ended with "say the word and I'll apply both fixes". |
+| Unsupported claims | Small one: "The frozen-array test throws in strict mode, which ES modules use" - `push` on a frozen array throws a TypeError in sloppy mode too (checked with node). Its frozen test also uses 660-720, so it passes on the buggy code. | "540-600 (touches start) ... false": the table does not show `now`; with the test's now = 540 this request is rejected by AC1 (start = now), not only by the overlap. "Ran 2 commands" I cannot see; its numbers match my own run. Its hypothesis "the UI may rely on the push" is false: `main.js` only reads `room.bookings` to list them. |
+| Clarity of explanation | Clear and short: root cause, second defect, diff, tests, run command. | Clearer structure because of the skill: evidence table, defect 1 / defect 2, and a separate "Hypotheses (not confirmed)" part (skill step 4). Longer. |
 
 **Which bugs did each answer find?** (BUG-A, BUG-B, both, neither)
 
--
+- No skill: both (BUG-A and BUG-B), but its regression tests for BUG-B could not see BUG-B on the buggy code.
+- With skill: both, with a test that isolates BUG-B (700-760, touches nothing).
 
 ---
 
