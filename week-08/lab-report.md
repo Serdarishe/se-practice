@@ -13,9 +13,9 @@ grader find your answers by them. You can add rows to any table, but never remov
 
 | | |
 | --- | --- |
-| Assistant I debugged with (tool) | |
-| Exact model (with its version, or `not displayed`) | |
-| Where the skill was installed (ChatGPT / Claude web / Claude Code / prompt-only simulation) | |
+| Assistant I debugged with (tool) | Claude (claude.ai web app) |
+| Exact model (with its version, or `not displayed`) | Claude Opus 5.5 (model picker "Opus 5.5", effort High) |
+| Where the skill was installed (ChatGPT / Claude web / Claude Code / prompt-only simulation) | Claude web (claude.ai, Pro plan) - uploaded `bug-detector.zip` in Settings → Customize → Skills, enabled |
 | Where I ran the tests (Bolt terminal / my computer / Codespace) | Claude cloud session (Linux container, Node 22.23.4), `npx vitest run` in `week-08/app/` - the same commands work on my computer |
 | Vitest version (the `RUN  v…` line of a run) | 3.2.7 |
 | Language of my booking module (`ts` or `js`) — the file I copied from `buggy/` | js - `app/src/booking.js`, copied from `buggy/booking.js` |
@@ -525,6 +525,8 @@ skill as enabled. If upload was not available, write `prompt-only simulation` an
 Screenshot of the result: `evidence/install.png`.
 
 <!-- Write below this line -->
+
+I uploaded `skills/bug-detector.zip` on claude.ai (Pro plan): Settings → Customize → Skills → upload. The upload gave no error. The skill shows as **bug-detector**, "by you · v1", with the toggle switched on, and its Contents tab shows `SKILL.md` with the seven steps (`evidence/install.png`). I installed it only after the no-skill chat in section 5, so that chat had no skill.
 
 ---
 
