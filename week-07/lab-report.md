@@ -15,11 +15,11 @@ grader find your answers by them. You can add rows to any table, but never remov
 | --- | --- |
 | Project I continue (`week-06` = my Week 06 Bolt project, `starter` = the provided starter) | week-06 - my Week 06 prototype (`week-06/prototype/index.html`, plain HTML + JS, no Bolt) |
 | Bolt project link (or `not shared`, and why) | not shared - no Bolt project exists; in Week 06 Bolt.new was not available and Claude built the page, which is committed in `week-06/prototype/` |
-| Assistant that generated the tests (tool) | |
-| Exact model (with its version, or `not displayed`) | |
-| Where I ran the tests (Bolt terminal / my computer / Codespace) | |
-| Vitest version (the `RUN  v…` line of a run) | |
-| Test command | |
+| Assistant that generated the tests (tool) | Claude - a fresh Claude Code agent chat with no earlier context, started from my Claude app session (Bolt.new not available, as in Week 06) |
+| Exact model (with its version, or `not displayed`) | claude-opus-5-5 |
+| Where I ran the tests (Bolt terminal / my computer / Codespace) | Claude cloud session (Linux container, Node 22.23.4), the same as running it on my computer with `npm install` and `npx vitest run` in `app/` |
+| Vitest version (the `RUN  v…` line of a run) | 3.2.7 |
+| Test command | `npx vitest run` (same as `npm test`) from `week-07/app/` |
 
 ---
 
@@ -244,17 +244,17 @@ Use the actual failure output below. Separate test repairs from implementation f
 
 [Chat-only reply again: answer in text, do not create files, read files or run commands.]
 
-=== THE ASSISTANT'S ANSWER, UNEDITED (its code fences shown as 4-space indented lines so this block does not break) ===
+=== THE ASSISTANT'S ANSWER, UNEDITED (its code fences shown as 4-space indented lines and its numbered headings indented by 2 spaces, so this block does not break the report's own section numbers) ===
 
 I reviewed the suite against AC1-AC6 and the case table. Your run passed all 20 tests, so there was no failure output to work from, and none of the findings point to a bug in `booking.js`. The run does show the expectations agree with the code. It doesn't show the tests would catch a bug, which is what the missing-boundary cases below are for.
 
 I also need to correct my last report: it said "all 19 table cases". The suite actually had 16 table cases, 3 AC5 tests and 1 fixed-time test, which is the 20 your run reports. (The case table has 17 rows; its AC5 row is covered by the separate AC5 tests.)
 
-## 1. Incorrect expectations
+  ## 1. Incorrect expectations
 
 None. I checked all 16 table cases against AC1-AC4 directly, not against the code, and every expected value follows from the AC wording. Nothing was adjusted to match the implementation.
 
-## 2. Test repairs
+  ## 2. Test repairs
 
 **Weak assertions**
 
@@ -291,11 +291,11 @@ None. I checked all 16 table cases against AC1-AC4 directly, not against the cod
 
 I traced every new case by hand against the current `canBook` and all should pass. What you should see is **23 passed, 2 skipped**.
 
-## 3. Implementation fixes
+  ## 3. Implementation fixes
 
 None. No test fails, and no expectation that follows from the ACs disagrees with `booking.js`. Section 5 has requirement questions, which aren't bugs.
 
-## 4. Revised `app/src/booking.test.js`
+  ## 4. Revised `app/src/booking.test.js`
 
     // app/src/booking.test.js
     // Unit tests for canBook (AC1-AC5). booking.js is imported as-is, not modified.
@@ -409,7 +409,7 @@ None. No test fails, and no expectation that follows from the ACs disagrees with
 
     npx vitest run src/booking.test.js
 
-## 5. AC mapping and open requirement questions
+  ## 5. AC mapping and open requirement questions
 
 | AC | Covered by |
 | --- | --- |
@@ -441,7 +441,15 @@ change and after restoring the correct code from section 7. Every test must pass
 is still open, leave its test failing and explain it in 9.1.
 
 ```text
-(paste here)
+
+ RUN  v3.2.7 /home/claude/se-practice/week-07/app
+
+ ✓ src/booking.test.js (23 tests) 13ms
+
+ Test Files  1 passed (1)
+      Tests  23 passed (23)
+   Start at  17:27:27
+   Duration  397ms (transform 54ms, setup 0ms, collect 45ms, tests 13ms, environment 0ms, prepare 106ms)
 ```
 
 ---
@@ -454,18 +462,66 @@ error does not count as detection.
 
 | Trial | Intentional change | Detected / Survived | Failing test ID(s) | If it survived: why, and what you added |
 | --- | --- | --- | --- | --- |
-| M1 | Reject duration >= 120 instead of > 120 | Detected / Survived | | |
-| M2 | Treat touching endpoints as an overlap | Detected / Survived | | |
-| M3 | Remove the blocked-room rejection | Detected / Survived | | |
+| M1 | Reject duration >= 120 instead of > 120 | Detected | T06, X1 | - (detected: `expected false to be true` on exactly 120 minutes, 720-840 and 1320-1440) |
+| M2 | Treat touching endpoints as an overlap | Detected | T01, T08, AC5 | - (detected; my B6 touching two bookings failed too, and the AC5 test because its Available request 660-720 touches the booking) |
+| M3 | Remove the blocked-room rejection | Detected | T13 | - (detected: `expected true to be false`; only T13 has blocked = true, so it is the only guard of AC3) |
 
 **The run of each mutant, pasted unedited.** Paste the `Tests` summary line and the failing test
 names at least:
 
 ```text
-(paste here)
+M1 - `if (end - start >= 120) return false;` in src/booking.js (lines with the failing tests and the summary, copied from the run)
+ RUN  v3.2.7 /home/claude/se-practice/week-07/app
+ ❯ src/booking.test.js (23 tests | 2 failed) 27ms
+   × AC1 - valid interval after the supplied current time > X1 AC1 AC2: 1320-1440 ends exactly at 24:00 with 120 minutes and is accepted 13ms
+     → expected false to be true // Object.is equality
+   × AC2 - at most 120 minutes > T06 AC2: 720-840 is exactly 120 minutes and is accepted 1ms
+     → expected false to be true // Object.is equality
+ FAIL  src/booking.test.js > AC1 - valid interval after the supplied current time > X1 AC1 AC2: 1320-1440 ends exactly at 24:00 with 120 minutes and is accepted
+ ❯ src/booking.test.js:38:41
+ FAIL  src/booking.test.js > AC2 - at most 120 minutes > T06 AC2: 720-840 is exactly 120 minutes and is accepted
+ ❯ src/booking.test.js:53:39
+ Test Files  1 failed (1)
+      Tests  2 failed | 21 passed (23)
 ```
 
-All three changes reverted, and the full suite run again (section 6.3): yes / no
+```text
+M2 - `if (start <= b.end && b.start <= end) return false;` in src/booking.js (lines with the failing tests and the summary, copied from the run)
+ RUN  v3.2.7 /home/claude/se-practice/week-07/app
+ ❯ src/booking.test.js (23 tests | 4 failed) 25ms
+   × AC4 - no overlap, touching endpoints allowed > T01 AC4: 660-720 touches the end of 600-660 and is accepted 13ms
+     → expected false to be true // Object.is equality
+   × AC4 - no overlap, touching endpoints allowed > T08 AC4: 570-600 touches the start of 600-660 and is accepted 1ms
+     → expected false to be true // Object.is equality
+   × AC4 - no overlap, touching endpoints allowed > B6 AC4: 660-720 fills the gap between 600-660 and 720-780, touching both, and is accepted 1ms
+     → expected false to be true // Object.is equality
+   × AC5 - decision only, existing bookings unchanged > AC5: an Available request (660-720) leaves the bookings exactly as before 1ms
+     → expected false to be true // Object.is equality
+ FAIL  src/booking.test.js > AC4 - no overlap, touching endpoints allowed > T01 AC4: 660-720 touches the end of 600-660 and is accepted
+ ❯ src/booking.test.js:69:39
+ FAIL  src/booking.test.js > AC4 - no overlap, touching endpoints allowed > T08 AC4: 570-600 touches the start of 600-660 and is accepted
+ ❯ src/booking.test.js:73:39
+ FAIL  src/booking.test.js > AC4 - no overlap, touching endpoints allowed > B6 AC4: 660-720 fills the gap between 600-660 and 720-780, touching both, and is accepted
+ ❯ src/booking.test.js:117:53
+ FAIL  src/booking.test.js > AC5 - decision only, existing bookings unchanged > AC5: an Available request (660-720) leaves the bookings exactly as before
+ ❯ src/booking.test.js:128:20
+ Test Files  1 failed (1)
+      Tests  4 failed | 19 passed (23)
+```
+
+```text
+M3 - `if (blocked) return false;` removed from src/booking.js (lines with the failing tests and the summary, copied from the run)
+ RUN  v3.2.7 /home/claude/se-practice/week-07/app
+ ❯ src/booking.test.js (23 tests | 1 failed) 19ms
+   × AC3 - blocked room > T13 AC3: 660-720 in a blocked room is rejected 11ms
+     → expected true to be false // Object.is equality
+ FAIL  src/booking.test.js > AC3 - blocked room > T13 AC3: 660-720 in a blocked room is rejected
+ ❯ src/booking.test.js:63:58
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 passed (23)
+```
+
+All three changes reverted, and the full suite run again (section 6.3): yes - each mutant was made with one sed edit, run, and undone with `git checkout -- app/src/booking.js`; `git status` showed booking.js clean before the final run
 
 ---
 
@@ -495,17 +551,17 @@ Use the same IDs as `known_fails` in `submission.yml`. Write `none` if the run i
 
 | Check | Why it stays |
 | --- | --- |
-| | |
+| none | `python tests/check_suite.py` gives 33 PASS / 0 FAIL / 0 ERROR (run with no `node_modules/` in `app/`, as in a fresh clone) |
 
 ### 9.2 Original and improved suites
 
 | Measure | First suite | Improved suite |
 | --- | --- | --- |
-| Executed / passed / failed | | |
-| Requirements with meaningful tests (AC IDs and gaps) | | |
-| Selected mutants detected | | |
-| Accepted / revised / rejected tests | | |
-| Remaining limitations | | |
+| Executed / passed / failed | 20 / 20 / 0 (16 table cases inside one `test.each`, 3 AC5 tests, 1 fixed-time test) | 23 / 23 / 0 (T01-T14, X1, X2, AC5, B1-B6, one named test each) |
+| Requirements with meaningful tests (AC IDs and gaps) | AC1-AC4: all 16 planned cases with correct expected values; AC5: input compared on every case + one Available test vs a hand-written literal; gaps: no 1-minute boundaries, AC6 none, and two weak tests (Unavailable AC5, frozen `not.toThrow`) | AC1: T02-T05, X1, B1, B2; AC2: T06, T07, X1; AC3: T13 only; AC4: T01, T08-T12, T14, X2, B3-B6; AC5: `JSON.stringify` before/after in every test + AC5 vs `structuredClone`; AC6: only the manual checks U3, U4 |
+| Selected mutants detected | 3 / 3 when I ran M1-M3 on it as well (M1: T06, X1; M2: T01, T08 + 3 AC5/clock tests; M3: T13). An extra defect `start < b.end - 1` (1-minute overlap allowed) SURVIVED: 20 passed | 3 / 3 (M1: T06, X1; M2: T01, T08, B6, AC5; M3: T13); the extra `start < b.end - 1` defect is caught by B3 |
+| Accepted / revised / rejected tests | section 5: 2 accepted (expected values + inputs, real import), 2 revised (`test.each` split into named tests, AC5 Available test), 3 rejected (fake clock + fixed-time test, frozen `not.toThrow` test, Unavailable AC5 test) | from the improvement answer: accepted `toStrictEqual`, the 3 removals and 6 new boundary tests (B1-B6); rejected `test.each`, the fake clock, freezing every input with `not.toThrow`, and `describe.skip` B0 |
+| Remaining limitations | could not be read case by case, used a faked `Date` clock, missed 1-minute overlaps | AC3 is guarded by one test (T13); the `start >= 0` branch cannot be reached with now = 540; no tests for bad input (NaN, missing `bookings`) or reversed existing bookings (9.3); AC6 and the page messages are checked only by hand |
 
 ### 9.3 What no AC decides
 
@@ -513,7 +569,9 @@ Call your function with `bookings = [{ start: 700, end: 650 }]` (a reversed exis
 and a request of 660–720. What does it return? Does any AC say what it should return? (This is
 the value you declare in `submission.yml` under `assumptions.invalid_existing_booking`.)
 
--
+- I called it with node: `canBook({ start: 660, end: 720, now: 540, blocked: false, bookings: [{ start: 700, end: 650 }] })` returns **true** (Available). For control, the same request with the normal booking `{ start: 650, end: 700 }` returns false.
+- Why: the overlap test is `start < b.end && b.start < end` = `660 < 650 && ...`, which is false, so a reversed booking never counts as an overlap. It does not throw either.
+- No AC decides it. AC4 talks about overlapping "an existing booking" but assumes the booking is a real interval, and AC1 only checks the candidate. My view: a reversed stored booking is a data error, and accepting a request on top of it is risky (if it was meant as 650-700, we just double-booked). But fixing it would be a new rule, not the extraction, so I left `canBook` as it is, declared `returns-true` and listed it as a limitation in 9.2.
 
 ---
 
@@ -529,3 +587,9 @@ the value you declare in `submission.yml` under `assumptions.invalid_existing_bo
      pass, M1 would have become the real behaviour." -->
 
 <!-- Write your conclusion below this line -->
+
+(a) No expected value in the first suite was wrong: all 16 matched my plan, and it even caught M1-M3. The real mistake was missing boundaries. Its smallest overlap was T09 with 30 minutes, so a canBook with `start < b.end - 1` (a one-minute overlap allowed) passed all 20 tests. I found it by trying that extra defect on both suites: only my improved B3 (659-719) failed.
+
+(b) The final green run (23/23) proves that this canBook gives the planned answers for these 23 inputs and does not change the bookings it receives. It does not prove the page is right. U3 showed that: with an empty Start field the page said "end time must be later than the start time", a wrong message that no unit test could see, because canBook only gets numbers.
+
+(c) AC3 depends on one test, T13. If it were wrong, M3 would survive.
