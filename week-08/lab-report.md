@@ -486,10 +486,12 @@ AssertionError: expected [ { start: 600, end: 660 }, …(1) ] to strictly equal 
 One row per defect. At least **BUG-A and BUG-B**. "Suspected cause" is your hypothesis
 **before** you ask any assistant: the line and why.
 
+My hypotheses below are my own words (written in Russian before asking any assistant, translated by Claude).
+
 | Defect | Test ID | Input | Expected | Actual | Suspected cause (line and why) |
 | --- | --- | --- | --- | --- | --- |
-| BUG-A | | | | | |
-| BUG-B | | | | | |
+| BUG-A | BUG-A (also T01, T08, B6, AC5 in 2.2) | 1380-1440, bookings [{1320-1380}], now 540 | true | false | Line `if (start <= b.end && end >= b.start) return false;` - for touching intervals like 660-720 and 600-660, `660 <= 660` is true. So the function thinks the bookings overlap and returns false (refusal). But they only touch at the endpoints, so the request should be allowed (AC4). |
+| BUG-B | BUG-B (also X1, B1, T06, T14 in 2.2) | 720-780, bookings [{600-660}], now 540 | true, bookings unchanged | true, but bookings become [{600-660}, {720-780}] | Line `bookings.push({ start, end });` - it adds the new booking to the original array, so it changes it. This breaks AC5 - canBook should only check whether the booking is possible, without changing the data. |
 
 ---
 
