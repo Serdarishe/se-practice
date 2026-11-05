@@ -130,3 +130,22 @@ describe('AC5 - decision only, existing bookings unchanged', () => {
     expect(bookings).toHaveLength(1);
   });
 });
+
+describe('Week 08 regression tests', () => {
+  // BUG-A only: canBook is called directly (no data check), so BUG-B cannot make this test fail.
+  test('BUG-A AC4: 1380-1440 touches the end of 1320-1380 and ends at 24:00, so it is Available', () => {
+    const result = canBook({ start: 1380, end: 1440, now: 540, blocked: false, bookings: [{ start: 1320, end: 1380 }] });
+    expect(result).toBe(true);
+  });
+
+  // BUG-B only: 720-780 touches nothing (the booking is 600-660), so BUG-A cannot reject it first.
+  test('BUG-B AC5: an Available request 720-780 that touches nothing leaves the bookings unchanged', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    const before = structuredClone(bookings);
+
+    const result = canBook({ start: 720, end: 780, now: 540, blocked: false, bookings });
+
+    expect(result).toBe(true);
+    expect(bookings).toStrictEqual(before);
+  });
+});

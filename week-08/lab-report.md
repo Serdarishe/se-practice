@@ -241,7 +241,242 @@ Run them **on the buggy code**. Both must fail here. That is the evidence that e
 its bug.
 
 ```text
-(paste here)
+ RUN  v3.2.7 /home/claude/se-practice/week-08/app
+
+ ❯ src/booking.test.js (25 tests | 10 failed) 38ms
+   ✓ AC1 - valid interval after the supplied current time > T02 AC1: 540-570 starts exactly at now (540) is rejected 2ms
+   ✓ AC1 - valid interval after the supplied current time > T03 AC1: 720-720 zero duration is rejected 0ms
+   ✓ AC1 - valid interval after the supplied current time > T04 AC1: 750-720 reversed interval is rejected 0ms
+   ✓ AC1 - valid interval after the supplied current time > T05 AC1: 1380-1441 ends one minute after 24:00 and is rejected 0ms
+   × AC1 - valid interval after the supplied current time > X1 AC1 AC2: 1320-1440 ends exactly at 24:00 with 120 minutes and is accepted 14ms
+     → expected '{"start":1320,"end":1440,"now":540,"b…' to be '{"start":1320,"end":1440,"now":540,"b…' // Object.is equality
+   × AC1 - valid interval after the supplied current time > B1 AC1: 541-571 starts one minute after now and is accepted 1ms
+     → expected '{"start":541,"end":571,"now":540,"blo…' to be '{"start":541,"end":571,"now":540,"blo…' // Object.is equality
+   ✓ AC1 - valid interval after the supplied current time > B2 AC1: 530-570 starts before now (540) but ends after it and is rejected 0ms
+   × AC2 - at most 120 minutes > T06 AC2: 720-840 is exactly 120 minutes and is accepted 1ms
+     → expected '{"start":720,"end":840,"now":540,"blo…' to be '{"start":720,"end":840,"now":540,"blo…' // Object.is equality
+   ✓ AC2 - at most 120 minutes > T07 AC2: 720-841 is 121 minutes and is rejected 0ms
+   ✓ AC3 - blocked room > T13 AC3: 660-720 in a blocked room is rejected 0ms
+   × AC4 - no overlap, touching endpoints allowed > T01 AC4: 660-720 touches the end of 600-660 and is accepted 3ms
+     → expected false to be true // Object.is equality
+   × AC4 - no overlap, touching endpoints allowed > T08 AC4: 570-600 touches the start of 600-660 and is accepted 1ms
+     → expected false to be true // Object.is equality
+   ✓ AC4 - no overlap, touching endpoints allowed > T09 AC4: 630-690 partly overlaps 600-660 and is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > T10 AC4: 570-690 contains the whole booking 600-660 and is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > T11 AC4: 615-645 lies inside 600-660 and is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > T12 AC4: 600-660 is identical to the booking and is rejected 0ms
+   × AC4 - no overlap, touching endpoints allowed > T14 AC4: 630-690 with no bookings ([]) is accepted 1ms
+     → expected '{"start":630,"end":690,"now":540,"blo…' to be '{"start":630,"end":690,"now":540,"blo…' // Object.is equality
+   ✓ AC4 - no overlap, touching endpoints allowed > X2 AC4: 660-750 touches 600-660 but overlaps the second booking 720-780 and is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > B3 AC4: 659-719 overlaps the end of 600-660 by one minute and is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > B4 AC4: 571-601 overlaps the start of 600-660 by one minute and is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > B5 AC4: 630-690 with unsorted bookings [720-780, 600-660] overlaps the later entry and is rejected 0ms
+   × AC4 - no overlap, touching endpoints allowed > B6 AC4: 660-720 fills the gap between 600-660 and 720-780, touching both, and is accepted 1ms
+     → expected false to be true // Object.is equality
+   × AC5 - decision only, existing bookings unchanged > AC5: an Available request (660-720) leaves the bookings exactly as before 1ms
+     → expected false to be true // Object.is equality
+   × Week 08 regression tests > BUG-A AC4: 1380-1440 touches the end of 1320-1380 and ends at 24:00, so it is Available 1ms
+     → expected false to be true // Object.is equality
+   × Week 08 regression tests > BUG-B AC5: an Available request 720-780 that touches nothing leaves the bookings unchanged 5ms
+     → expected [ { start: 600, end: 660 }, …(1) ] to strictly equal [ { start: 600, end: 660 } ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/booking.test.js > AC1 - valid interval after the supplied current time > X1 AC1 AC2: 1320-1440 ends exactly at 24:00 with 120 minutes and is accepted
+AssertionError: expected '{"start":1320,"end":1440,"now":540,"b…' to be '{"start":1320,"end":1440,"now":540,"b…' // Object.is equality
+
+Expected: "{"start":1320,"end":1440,"now":540,"blocked":false,"bookings":[{"start":600,"end":660}]}"
+Received: "{"start":1320,"end":1440,"now":540,"blocked":false,"bookings":[{"start":600,"end":660},{"start":1320,"end":1440}]}"
+
+ ❯ decide src/booking.test.js:16:33
+     14|   const before = JSON.stringify(input);
+     15|   const result = canBook(input);
+     16|   expect(JSON.stringify(input)).toBe(before);
+       |                                 ^
+     17|   return result;
+     18| }
+ ❯ src/booking.test.js:38:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/booking.test.js > AC1 - valid interval after the supplied current time > B1 AC1: 541-571 starts one minute after now and is accepted
+AssertionError: expected '{"start":541,"end":571,"now":540,"blo…' to be '{"start":541,"end":571,"now":540,"blo…' // Object.is equality
+
+Expected: "{"start":541,"end":571,"now":540,"blocked":false,"bookings":[{"start":600,"end":660}]}"
+Received: "{"start":541,"end":571,"now":540,"blocked":false,"bookings":[{"start":600,"end":660},{"start":541,"end":571}]}"
+
+ ❯ decide src/booking.test.js:16:33
+     14|   const before = JSON.stringify(input);
+     15|   const result = canBook(input);
+     16|   expect(JSON.stringify(input)).toBe(before);
+       |                                 ^
+     17|   return result;
+     18| }
+ ❯ src/booking.test.js:43:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/booking.test.js > AC2 - at most 120 minutes > T06 AC2: 720-840 is exactly 120 minutes and is accepted
+AssertionError: expected '{"start":720,"end":840,"now":540,"blo…' to be '{"start":720,"end":840,"now":540,"blo…' // Object.is equality
+
+Expected: "{"start":720,"end":840,"now":540,"blocked":false,"bookings":[{"start":600,"end":660}]}"
+Received: "{"start":720,"end":840,"now":540,"blocked":false,"bookings":[{"start":600,"end":660},{"start":720,"end":840}]}"
+
+ ❯ decide src/booking.test.js:16:33
+     14|   const before = JSON.stringify(input);
+     15|   const result = canBook(input);
+     16|   expect(JSON.stringify(input)).toBe(before);
+       |                                 ^
+     17|   return result;
+     18| }
+ ❯ src/booking.test.js:53:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/booking.test.js > AC4 - no overlap, touching endpoints allowed > T01 AC4: 660-720 touches the end of 600-660 and is accepted
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/booking.test.js:69:39
+     67| describe('AC4 - no overlap, touching endpoints allowed', () => {
+     68|   test('T01 AC4: 660-720 touches the end of 600-660 and is accepted', …
+     69|     expect(decide(fixture(660, 720))).toBe(true);
+       |                                       ^
+     70|   });
+     71| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/booking.test.js > AC4 - no overlap, touching endpoints allowed > T08 AC4: 570-600 touches the start of 600-660 and is accepted
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/booking.test.js:73:39
+     71| 
+     72|   test('T08 AC4: 570-600 touches the start of 600-660 and is accepted'…
+     73|     expect(decide(fixture(570, 600))).toBe(true);
+       |                                       ^
+     74|   });
+     75| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/booking.test.js > AC4 - no overlap, touching endpoints allowed > T14 AC4: 630-690 with no bookings ([]) is accepted
+AssertionError: expected '{"start":630,"end":690,"now":540,"blo…' to be '{"start":630,"end":690,"now":540,"blo…' // Object.is equality
+
+Expected: "{"start":630,"end":690,"now":540,"blocked":false,"bookings":[]}"
+Received: "{"start":630,"end":690,"now":540,"blocked":false,"bookings":[{"start":630,"end":690}]}"
+
+ ❯ decide src/booking.test.js:16:33
+     14|   const before = JSON.stringify(input);
+     15|   const result = canBook(input);
+     16|   expect(JSON.stringify(input)).toBe(before);
+       |                                 ^
+     17|   return result;
+     18| }
+ ❯ src/booking.test.js:93:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/booking.test.js > AC4 - no overlap, touching endpoints allowed > B6 AC4: 660-720 fills the gap between 600-660 and 720-780, touching both, and is accepted
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/booking.test.js:117:53
+    115|   test('B6 AC4: 660-720 fills the gap between 600-660 and 720-780, tou…
+    116|     const bookings = [{ start: 600, end: 660 }, { start: 720, end: 780…
+    117|     expect(decide(fixture(660, 720, { bookings }))).toBe(true);
+       |                                                     ^
+    118|   });
+    119| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/booking.test.js > AC5 - decision only, existing bookings unchanged > AC5: an Available request (660-720) leaves the bookings exactly as before
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/booking.test.js:128:20
+    126|     const result = canBook({ start: 660, end: 720, now: 540, blocked: …
+    127| 
+    128|     expect(result).toBe(true);
+       |                    ^
+    129|     expect(bookings).toStrictEqual(before);
+    130|     expect(bookings).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/booking.test.js > Week 08 regression tests > BUG-A AC4: 1380-1440 touches the end of 1320-1380 and ends at 24:00, so it is Available
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/booking.test.js:138:20
+    136|   test('BUG-A AC4: 1380-1440 touches the end of 1320-1380 and ends at …
+    137|     const result = canBook({ start: 1380, end: 1440, now: 540, blocked…
+    138|     expect(result).toBe(true);
+       |                    ^
+    139|   });
+    140| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/booking.test.js > Week 08 regression tests > BUG-B AC5: an Available request 720-780 that touches nothing leaves the bookings unchanged
+AssertionError: expected [ { start: 600, end: 660 }, …(1) ] to strictly equal [ { start: 600, end: 660 } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "end": 660,
+      "start": 600,
+    },
++   {
++     "end": 780,
++     "start": 720,
++   },
+  ]
+
+ ❯ src/booking.test.js:149:22
+    147| 
+    148|     expect(result).toBe(true);
+    149|     expect(bookings).toStrictEqual(before);
+       |                      ^
+    150|   });
+    151| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 15 passed (25)
+   Start at  20:07:58
+   Duration  374ms (transform 61ms, setup 0ms, collect 40ms, tests 38ms, environment 0ms, prepare 88ms)
 ```
 
 ---
