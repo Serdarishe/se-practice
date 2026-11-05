@@ -501,16 +501,23 @@ My hypotheses below are my own words (written in Russian before asking any assis
 
 | Check | yes / no |
 | --- | --- |
-| The file is plain UTF-8 text, named exactly `SKILL.md` (not `SKILL.md.txt`) | yes / no |
-| The first and the closing YAML delimiter are exactly three hyphens: `---` | yes / no |
-| `name` is lowercase with hyphens, and `description` says WHEN to use it | yes / no |
-| I read the whole file once: no passwords, API keys or private student data | yes / no |
+| The file is plain UTF-8 text, named exactly `SKILL.md` (not `SKILL.md.txt`) | yes |
+| The first and the closing YAML delimiter are exactly three hyphens: `---` | yes |
+| `name` is lowercase with hyphens, and `description` says WHEN to use it | yes |
+| I read the whole file once: no passwords, API keys or private student data | yes |
 
 **The contents of `skills/bug-detector.zip`.** Paste the listing (Windows: open the ZIP and copy
 the paths; macOS/Linux: `unzip -l skills/bug-detector.zip`):
 
 ```text
-(paste here)
+$ unzip -l skills/bug-detector.zip
+Archive:  skills/bug-detector.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2026-11-05 20:27   bug-detector/
+      570  2026-11-05 20:27   bug-detector/SKILL.md
+---------                     -------
+      570                     2 files
 ```
 
 **Installation.** Where you uploaded it, what the upload said, and whether a new chat showed the
