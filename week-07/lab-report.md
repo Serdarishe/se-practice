@@ -39,6 +39,8 @@ the behaviour did not change. Also say which file of the page now calls it. 40 w
 
 <!-- Write below this line -->
 
+The decision now lives in `app/src/booking.js` as `export function canBook({ start, end, now, blocked, bookings })`. I copied the five conditions of `checkAvailability` in the same order and with the same operators (`start >= 0 && start < end && end <= 1440`, `start <= now`, `end - start > 120`, `blocked`, `start < b.end && b.start < end`), but each one now returns `false` instead of `{ ok: false, reason }`, and the end returns `true`. The inline `<script>` moved to `app/src/main.js`, which does `import { canBook } from './booking.js'` and calls it in the "Check availability" handler. The HH:MM to minutes conversion and the reason messages stay in the page: `reasonFor()` in `main.js` only chooses the text after `canBook` has said false. I added `package.json` with Vite (to serve the module page) and Vitest. To check that nothing changed, I ran the same 12 inputs (all three rooms, blocked toggle, 120/121 minutes, touching, reversed, empty start) on the old `index.html` and on the new page in Chromium: all 12 results and messages were identical.
+
 ---
 
 ## 3. Task 2 — the test plan
