@@ -1,111 +1,132 @@
-// app/src/booking.test.js
-// Unit tests for canBook (AC1-AC5). booking.js is imported as-is, not modified.
-import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { canBook } from './booking.js';
+// Final suite for canBook (Practice #07). Started from the assistant's first suite
+// (suites/first/booking.test.js) and revised after the review in lab-report.md section 5.
+// Expected values come from AC1-AC4 and the plan in lab-report.md section 3, not from the code.
+import { describe, test, expect } from 'vitest';
+import { canBook } from './booking';
 
-const NOW = 540; // 09:00, the supplied current time for every case
-
-// Fresh fixture for every test: new object, new bookings array, new booking objects.
-function makeInput(start, end, overrides = {}) {
-  return {
-    start,
-    end,
-    now: NOW,
-    blocked: false,
-    bookings: [{ start: 600, end: 660 }],
-    ...structuredClone(overrides),
-  };
+// Fresh default fixture for every call: now 09:00, not blocked, one booking 10:00-11:00.
+function fixture(start, end, changes = {}) {
+  return { start, end, now: 540, blocked: false, bookings: [{ start: 600, end: 660 }], ...changes };
 }
 
-beforeEach(() => {
-  // Fixed wall clock, deliberately far from now = 540 (23:30 local).
-  // If canBook ever read Date instead of the supplied `now`, T01/T06/T08/T14/X1 would fail.
-  vi.useFakeTimers();
-  vi.setSystemTime(new Date(2026, 0, 15, 23, 30, 0));
-});
+// Calls the real canBook and also checks that the call did not change the input (AC5).
+function decide(input) {
+  const before = JSON.stringify(input);
+  const result = canBook(input);
+  expect(JSON.stringify(input)).toBe(before);
+  return result;
+}
 
-afterEach(() => {
-  vi.useRealTimers();
-});
+describe('AC1 - valid interval after the supplied current time', () => {
+  test('T02 AC1: 540-570 starts exactly at now (540) is rejected', () => {
+    expect(decide(fixture(540, 570))).toBe(false);
+  });
 
-const cases = [
-  { id: 'T01', start: 660,  end: 720,  overrides: {},                expected: true,  ac: 'AC4',     note: 'touching after' },
-  { id: 'T02', start: 540,  end: 570,  overrides: {},                expected: false, ac: 'AC1',     note: 'starts exactly now' },
-  { id: 'T03', start: 720,  end: 720,  overrides: {},                expected: false, ac: 'AC1',     note: 'zero duration' },
-  { id: 'T04', start: 750,  end: 720,  overrides: {},                expected: false, ac: 'AC1',     note: 'reversed' },
-  { id: 'T05', start: 1380, end: 1441, overrides: {},                expected: false, ac: 'AC1',     note: 'past day end' },
-  { id: 'T06', start: 720,  end: 840,  overrides: {},                expected: true,  ac: 'AC2',     note: 'exactly 120 min' },
-  { id: 'T07', start: 720,  end: 841,  overrides: {},                expected: false, ac: 'AC2',     note: '121 min' },
-  { id: 'T08', start: 570,  end: 600,  overrides: {},                expected: true,  ac: 'AC4',     note: 'touching before' },
-  { id: 'T09', start: 630,  end: 690,  overrides: {},                expected: false, ac: 'AC4',     note: 'partial overlap' },
-  { id: 'T10', start: 570,  end: 690,  overrides: {},                expected: false, ac: 'AC4',     note: 'contains booking' },
-  { id: 'T11', start: 615,  end: 645,  overrides: {},                expected: false, ac: 'AC4',     note: 'inside booking' },
-  { id: 'T12', start: 600,  end: 660,  overrides: {},                expected: false, ac: 'AC4',     note: 'identical interval' },
-  { id: 'T13', start: 660,  end: 720,  overrides: { blocked: true }, expected: false, ac: 'AC3',     note: 'room blocked' },
-  { id: 'T14', start: 630,  end: 690,  overrides: { bookings: [] },  expected: true,  ac: 'AC4',     note: 'no bookings' },
-  { id: 'X1',  start: 1320, end: 1440, overrides: {},                expected: true,  ac: 'AC1+AC2', note: 'ends at 24:00, 120 min' },
-  {
-    id: 'X2', start: 660, end: 750,
-    overrides: { bookings: [{ start: 600, end: 660 }, { start: 720, end: 780 }] },
-    expected: false, ac: 'AC4', note: 'overlaps second booking',
-  },
-];
+  test('T03 AC1: 720-720 zero duration is rejected', () => {
+    expect(decide(fixture(720, 720))).toBe(false);
+  });
 
-describe('canBook - reviewed case table', () => {
-  test.each(cases)('$id $start-$end ($note) -> $expected [$ac]', ({ start, end, overrides, expected }) => {
-    const input = makeInput(start, end, overrides);
-    const before = structuredClone(input);
+  test('T04 AC1: 750-720 reversed interval is rejected', () => {
+    expect(decide(fixture(750, 720))).toBe(false);
+  });
 
-    const result = canBook(input);
+  test('T05 AC1: 1380-1441 ends one minute after 24:00 and is rejected', () => {
+    expect(decide(fixture(1380, 1441))).toBe(false);
+  });
 
-    expect(result).toBe(expected);   // exact boolean, not truthy/falsy
-    expect(input).toEqual(before);   // no input field or booking changed
+  test('X1 AC1 AC2: 1320-1440 ends exactly at 24:00 with 120 minutes and is accepted', () => {
+    expect(decide(fixture(1320, 1440))).toBe(true);
+  });
+
+  // Added after the improvement review (lab-report.md 6.2): the accept side next to T02.
+  test('B1 AC1: 541-571 starts one minute after now and is accepted', () => {
+    expect(decide(fixture(541, 571))).toBe(true);
+  });
+
+  test('B2 AC1: 530-570 starts before now (540) but ends after it and is rejected', () => {
+    expect(decide(fixture(530, 570))).toBe(false);
   });
 });
 
-describe('AC5 - decision only, booking data unchanged', () => {
-  test('Available request (660-720) does not add itself or change the 600-660 entry', () => {
-    const input = makeInput(660, 720);
-    const bookingsRef = input.bookings;
-    const entryRef = input.bookings[0];
+describe('AC2 - at most 120 minutes', () => {
+  test('T06 AC2: 720-840 is exactly 120 minutes and is accepted', () => {
+    expect(decide(fixture(720, 840))).toBe(true);
+  });
 
-    const result = canBook(input);
+  test('T07 AC2: 720-841 is 121 minutes and is rejected', () => {
+    expect(decide(fixture(720, 841))).toBe(false);
+  });
+});
+
+describe('AC3 - blocked room', () => {
+  test('T13 AC3: 660-720 in a blocked room is rejected', () => {
+    expect(decide(fixture(660, 720, { blocked: true }))).toBe(false);
+  });
+});
+
+describe('AC4 - no overlap, touching endpoints allowed', () => {
+  test('T01 AC4: 660-720 touches the end of 600-660 and is accepted', () => {
+    expect(decide(fixture(660, 720))).toBe(true);
+  });
+
+  test('T08 AC4: 570-600 touches the start of 600-660 and is accepted', () => {
+    expect(decide(fixture(570, 600))).toBe(true);
+  });
+
+  test('T09 AC4: 630-690 partly overlaps 600-660 and is rejected', () => {
+    expect(decide(fixture(630, 690))).toBe(false);
+  });
+
+  test('T10 AC4: 570-690 contains the whole booking 600-660 and is rejected', () => {
+    expect(decide(fixture(570, 690))).toBe(false);
+  });
+
+  test('T11 AC4: 615-645 lies inside 600-660 and is rejected', () => {
+    expect(decide(fixture(615, 645))).toBe(false);
+  });
+
+  test('T12 AC4: 600-660 is identical to the booking and is rejected', () => {
+    expect(decide(fixture(600, 660))).toBe(false);
+  });
+
+  test('T14 AC4: 630-690 with no bookings ([]) is accepted', () => {
+    expect(decide(fixture(630, 690, { bookings: [] }))).toBe(true);
+  });
+
+  test('X2 AC4: 660-750 touches 600-660 but overlaps the second booking 720-780 and is rejected', () => {
+    const bookings = [{ start: 600, end: 660 }, { start: 720, end: 780 }];
+    expect(decide(fixture(660, 750, { bookings }))).toBe(false);
+  });
+
+  // Added after the improvement review (lab-report.md 6.2): 1-minute overlaps and two bookings.
+  test('B3 AC4: 659-719 overlaps the end of 600-660 by one minute and is rejected', () => {
+    expect(decide(fixture(659, 719))).toBe(false);
+  });
+
+  test('B4 AC4: 571-601 overlaps the start of 600-660 by one minute and is rejected', () => {
+    expect(decide(fixture(571, 601))).toBe(false);
+  });
+
+  test('B5 AC4: 630-690 with unsorted bookings [720-780, 600-660] overlaps the later entry and is rejected', () => {
+    const bookings = [{ start: 720, end: 780 }, { start: 600, end: 660 }];
+    expect(decide(fixture(630, 690, { bookings }))).toBe(false);
+  });
+
+  test('B6 AC4: 660-720 fills the gap between 600-660 and 720-780, touching both, and is accepted', () => {
+    const bookings = [{ start: 600, end: 660 }, { start: 720, end: 780 }];
+    expect(decide(fixture(660, 720, { bookings }))).toBe(true);
+  });
+});
+
+describe('AC5 - decision only, existing bookings unchanged', () => {
+  test('AC5: an Available request (660-720) leaves the bookings exactly as before', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    const before = structuredClone(bookings);
+
+    const result = canBook({ start: 660, end: 720, now: 540, blocked: false, bookings });
 
     expect(result).toBe(true);
-    expect(input.bookings).toBe(bookingsRef);
-    expect(input.bookings).toHaveLength(1);
-    expect(input.bookings[0]).toBe(entryRef);
-    expect(input.bookings).toEqual([{ start: 600, end: 660 }]);
-  });
-
-  test('Unavailable request (630-690) also leaves bookings unchanged', () => {
-    const input = makeInput(630, 690);
-
-    const result = canBook(input);
-
-    expect(result).toBe(false);
-    expect(input.bookings).toEqual([{ start: 600, end: 660 }]);
-  });
-
-  test('frozen inputs: canBook never tries to write (ESM is strict, a write would throw)', () => {
-    const input = makeInput(660, 720);
-    input.bookings.forEach(Object.freeze);
-    Object.freeze(input.bookings);
-    Object.freeze(input);
-
-    let result;
-    expect(() => { result = canBook(input); }).not.toThrow();
-    expect(result).toBe(true);
-  });
-});
-
-describe('fixed time - decision depends only on supplied now', () => {
-  test('same input gives the same decision at a different wall-clock time', () => {
-    const first = canBook(makeInput(660, 720));
-    vi.setSystemTime(new Date(2026, 0, 15, 6, 0, 0));
-    const second = canBook(makeInput(660, 720));
-
-    expect(first).toBe(true);
-    expect(second).toBe(true);
+    expect(bookings).toStrictEqual(before);
+    expect(bookings).toHaveLength(1);
   });
 });

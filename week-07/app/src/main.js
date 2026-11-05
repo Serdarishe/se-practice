@@ -49,6 +49,15 @@ function reasonFor(room, start, end, current) {
 
 document.getElementById("check").addEventListener("click", () => {
   const room = rooms.find(r => r.id === roomSelect.value);
+  // AC6: an empty time field gets its own message instead of a misleading AC1 reason.
+  const empty = [["now", "current time"], ["start", "start time"], ["end", "end time"]]
+    .filter(([id]) => !document.getElementById(id).value).map(([, label]) => label);
+  if (empty.length) {
+    document.getElementById("result").innerHTML =
+      '<div class="result no" role="alert">Please fill in the ' + empty.join(" and the ") + '.' +
+      '<div class="reason">No decision was made - a time field is empty.</div></div>';
+    return;
+  }
   const start = toMinutes(document.getElementById("start").value);
   const end = toMinutes(document.getElementById("end").value);
   const current = toMinutes(document.getElementById("now").value);
