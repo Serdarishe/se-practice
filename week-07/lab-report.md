@@ -570,8 +570,8 @@ and a request of 660–720. What does it return? Does any AC say what it should 
 the value you declare in `submission.yml` under `assumptions.invalid_existing_booking`.)
 
 - I called it with node: `canBook({ start: 660, end: 720, now: 540, blocked: false, bookings: [{ start: 700, end: 650 }] })` returns **true** (Available). For control, the same request with the normal booking `{ start: 650, end: 700 }` returns false.
-- Why: the overlap test is `start < b.end && b.start < end` = `660 < 650 && ...`, which is false, so a reversed booking never counts as an overlap. It does not throw either.
-- No AC decides it. AC4 talks about overlapping "an existing booking" but assumes the booking is a real interval, and AC1 only checks the candidate. My view: a reversed stored booking is a data error, and accepting a request on top of it is risky (if it was meant as 650-700, we just double-booked). But fixing it would be a new rule, not the extraction, so I left `canBook` as it is, declared `returns-true` and listed it as a limitation in 9.2.
+- Why it returns true: the overlap check is `start < b.end && b.start < end` = `660 < 650 && ...`, which is false, so the reversed booking is never counted. No AC says what to do with it.
+- My opinion: this booking is wrong, because the end is before the start. I think such data should be checked when the booking is created, so errors are not allowed. So I left `canBook` as it is and declared `returns-true`.
 
 ---
 
@@ -588,8 +588,8 @@ the value you declare in `submission.yml` under `assumptions.invalid_existing_bo
 
 <!-- Write your conclusion below this line -->
 
-(a) No expected value in the first suite was wrong: all 16 matched my plan, and it even caught M1-M3. The real mistake was missing boundaries. Its smallest overlap was T09 with 30 minutes, so a canBook with `start < b.end - 1` (a one-minute overlap allowed) passed all 20 tests. I found it by trying that extra defect on both suites: only my improved B3 (659-719) failed.
+(a) The first suite did not have a test with a 1 minute overlap. We ran the same bug on the first suite and it passed all 20 tests. The smallest overlap there was 30 minutes (T09), so the error with a 1 minute overlap was not noticed. Our test B3 checked this and found the error.
 
-(b) The final green run (23/23) proves that this canBook gives the planned answers for these 23 inputs and does not change the bookings it receives. It does not prove the page is right. U3 showed that: with an empty Start field the page said "end time must be later than the start time", a wrong message that no unit test could see, because canBook only gets numbers.
+(b) The 23/23 run proves that canBook passed all 23 tests, but it does not guarantee that the whole page works correctly. For example, in U3 with an empty Start the page showed a wrong error message, and the tests did not notice it, because they checked only numbers.
 
-(c) AC3 depends on one test, T13. If it were wrong, M3 would survive.
+(c) Room blocking was checked by only one test, T13. This is not enough to be sure that the blocking check works correctly. If it was wrong, mutant M3 would stay unnoticed, so it is worth adding one more test with a blocked room at another time.

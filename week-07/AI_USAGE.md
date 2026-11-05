@@ -16,7 +16,7 @@ Claude moved the decision from `checkAvailability()` in the Week 06 `index.html`
 
 **I used another assistant as well (to explain a failure, to draft text in lab-report.md, …):** yes
 <!-- If "yes": which one, the exact model, and for which section. -->
-The Claude session above (claude-opus-5-5) drafted the text of lab-report.md sections 1-10, including the reasons in section 3, the review in section 5, 9.2, 9.3 and the conclusion in section 10. I read and checked them against the ACs and the real runs before submitting.
+The Claude session above (claude-opus-5-5) drafted the text of lab-report.md sections 1-9.2, including the reasons in section 3 and the review in section 5. I read and checked them against the ACs and the real runs. **Section 10 and my opinion in 9.3 are my own words:** I wrote the answers in Russian and Claude only translated them into English, without adding content. The first bullet of 9.3 (the result of calling canBook) is from the real call.
 
 **`suites/first/` holds the assistant's first test file exactly as it generated it:** yes
 
