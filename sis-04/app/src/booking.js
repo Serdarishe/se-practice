@@ -13,3 +13,12 @@ export function canBook({ start, end, now, blocked, bookings }) {
   }
   return true;
 }
+
+// checkRoom - the availability check for one room of a catalog (F3, F5).
+// Finds the room by id and asks canBook with THAT room's own blocked flag and bookings.
+// An unknown id is not available. It only reads its inputs (AC5).
+export function checkRoom(rooms, roomId, { start, end, now }) {
+  const room = rooms.find((r) => r.id === roomId);
+  if (!room) return false;
+  return canBook({ start, end, now, blocked: room.blocked, bookings: room.bookings });
+}
