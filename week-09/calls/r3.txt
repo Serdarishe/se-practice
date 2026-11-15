@@ -1,0 +1,1 @@
+I can only check slots for today, not tomorrow. Do you want me to check a slot today instead? If so, please tell me the exact start and end time, the current time, whether the room is blocked, and which bookings it already has today.
