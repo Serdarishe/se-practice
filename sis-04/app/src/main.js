@@ -1,15 +1,12 @@
 import { canBook } from './booking.js';
+import { ROOMS } from './rooms.js';
 
-const rooms = [
-  { id: "A101", name: "A101 - Lecture Hall", blocked: false, bookings: [{ start: 600, end: 660 }] },
-  { id: "B204", name: "B204 - Seminar Room", blocked: false, bookings: [{ start: 540, end: 600 }, { start: 780, end: 840 }] },
-  { id: "C310", name: "C310 - Computer Lab", blocked: true, bookings: [] }
-];
+const rooms = ROOMS;
 
 const roomSelect = document.getElementById("room");
 rooms.forEach(r => {
   const o = document.createElement("option");
-  o.value = r.id; o.textContent = r.name;
+  o.value = r.id; o.textContent = r.id + " - " + r.name;
   roomSelect.appendChild(o);
 });
 
