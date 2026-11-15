@@ -1,12 +1,17 @@
-' diagrams/before.puml — the modules and components of your STARTING POINT and what depends on what.
-' Replace this stub. A component diagram is enough, for example:
-'
-'   @startuml
-'   component "App.tsx" as App
-'   component "booking.ts" as Booking
-'   App --> Booking : canBook()
-'   note right of App : rooms, times and the result all live here
-'   @enduml
-'
+' diagrams/before.puml - the modules of the starting point (week-08, baseline commit 245dd7e).
 @startuml
+title Before: week-08 app (baseline 245dd7e)
+component "index.html" as Page
+component "main.js" as Main
+component "booking.js" as Booking
+component "booking.test.js" as Tests
+Page --> Main : <script type=module>
+Main --> Booking : canBook()
+Tests --> Booking : canBook()
+note right of Main
+  rooms array (3 rooms, no capacity/equipment),
+  reasonFor() repeats AC1-AC4,
+  blocked checkbox writes room.blocked,
+  DOM reading and HTML building
+end note
 @enduml
