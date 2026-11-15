@@ -1,71 +1,77 @@
-import { checkRoom, unavailableReason } from './booking.js';
-import { ROOMS } from './rooms.js';
+// main.js - wires the page together. It holds the user's choices (filter, selected room,
+// whether a result is shown) but no room data and no rule: data from rooms.js, rules from
+// booking.js and filter.js, HTML from view.js.
+import { ROOMS } from "./rooms.js";
+import { checkRoom, unavailableReason } from "./booking.js";
+import { filterRooms, equipmentNames } from "./filter.js";
+import { toMinutes, equipmentBoxes, roomCard, emptyState, reasonText, resultBox } from "./view.js";
 
-const rooms = ROOMS;
+const el = {
+  attendees: document.getElementById("attendees"),
+  equipment: document.getElementById("equipment"),
+  rooms: document.getElementById("rooms"),
+  count: document.getElementById("count"),
+  now: document.getElementById("now"),
+  start: document.getElementById("start"),
+  end: document.getElementById("end"),
+  check: document.getElementById("check"),
+  result: document.getElementById("result"),
+};
 
-const roomSelect = document.getElementById("room");
-rooms.forEach(r => {
-  const o = document.createElement("option");
-  o.value = r.id; o.textContent = r.id + " - " + r.name;
-  roomSelect.appendChild(o);
-});
+let selectedId = null;   // the chosen room, or null when no room matches the filter
+let showing = false;     // is a result on screen? Then it is re-checked when the room changes (F5)
 
-function toMinutes(hhmm) {
-  const [h, m] = hhmm.split(":").map(Number);
-  return h * 60 + m;
+function criteria() {
+  const attendees = Math.max(1, parseInt(el.attendees.value, 10) || 1);   // an empty field counts as 1
+  const equipment = [...el.equipment.querySelectorAll("input:checked")].map((box) => box.value);
+  return { attendees, equipment };
 }
-function toHHMM(min) {
-  return String(Math.floor(min / 60)).padStart(2, "0") + ":" + String(min % 60).padStart(2, "0");
+
+function renderRooms() {
+  const wanted = criteria();
+  const matches = filterRooms(ROOMS, wanted);
+  if (!matches.some((room) => room.id === selectedId)) selectedId = matches.length ? matches[0].id : null;
+  el.count.textContent = matches.length + " of " + ROOMS.length + " rooms match";
+  el.rooms.innerHTML = matches.length
+    ? matches.map((room) => roomCard(room, room.id === selectedId)).join("")
+    : emptyState(wanted);
+  el.check.disabled = !matches.length;
+  refresh();
 }
 
-function showRoom() {
-  const room = rooms.find(r => r.id === roomSelect.value);
-  document.getElementById("blocked").checked = room.blocked;
-  const list = room.bookings.map(b => "<li>" + toHHMM(b.start) + " - " + toHHMM(b.end) + "</li>").join("");
-  document.getElementById("roomInfo").innerHTML =
-    (room.blocked ? '<span class="tag">Blocked</span>' : "") +
-    "<div><b>Existing bookings:</b>" + (list ? "<ul>" + list + "</ul>" : " none") + "</div>";
-}
-
-// The decision comes from checkRoom; unavailableReason only says which rule failed.
-// This turns that reason into the same texts as in Week 06. No rule is checked here.
-function reasonText(reason) {
-  switch (reason.code) {
-    case "AC1_ORDER": return "The end time must be later than the start time (AC1).";
-    case "AC1_PAST": return "The start time must be after the current time " + toHHMM(reason.now) + " (AC1).";
-    case "AC2": return "The booking is " + reason.minutes + " minutes; the limit is 120 minutes (AC2).";
-    case "AC3": return "This room is blocked (AC3).";
-    case "AC4": return "Overlaps the existing booking " + toHHMM(reason.booking.start) + " - " + toHHMM(reason.booking.end) + " (AC4).";
-    default: return "Unavailable.";
+// F5: a result on screen always belongs to the room that is selected now.
+function refresh() {
+  if (!showing) return;
+  if (selectedId) check();
+  else {
+    showing = false;
+    el.result.innerHTML = "";
   }
 }
 
-document.getElementById("check").addEventListener("click", () => {
-  const room = rooms.find(r => r.id === roomSelect.value);
+function check() {
+  showing = true;
   // AC6: an empty time field gets its own message instead of a misleading AC1 reason.
-  const empty = [["now", "current time"], ["start", "start time"], ["end", "end time"]]
-    .filter(([id]) => !document.getElementById(id).value).map(([, label]) => label);
+  const empty = [[el.now, "current time"], [el.start, "start time"], [el.end, "end time"]]
+    .filter(([input]) => !input.value).map(([, label]) => label);
   if (empty.length) {
-    document.getElementById("result").innerHTML =
-      '<div class="result no" role="alert">Please fill in the ' + empty.join(" and the ") + '.' +
-      '<div class="reason">No decision was made - a time field is empty.</div></div>';
+    el.result.innerHTML = resultBox("no", "Please fill in the " + empty.join(" and the ") + ".",
+      "No decision was made - a time field is empty.");
     return;
   }
-  const start = toMinutes(document.getElementById("start").value);
-  const end = toMinutes(document.getElementById("end").value);
-  const current = toMinutes(document.getElementById("now").value);
-  const request = { start, end, now: current };
-  const ok = checkRoom(rooms, room.id, request);
-  const reason = ok ? "No conflicts. Nothing has been saved - this only checks availability."
-                    : reasonText(unavailableReason(rooms, room.id, request));
-  document.getElementById("result").innerHTML =
-    '<div class="result ' + (ok ? "ok" : "no") + '" role="status">' + (ok ? "Available" : "Unavailable") +
-    '<div class="reason">' + reason + "</div></div>";
-});
+  const request = { start: toMinutes(el.start.value), end: toMinutes(el.end.value), now: toMinutes(el.now.value) };
+  el.result.innerHTML = checkRoom(ROOMS, selectedId, request)
+    ? resultBox("ok", selectedId + ": Available", "No conflicts. Nothing has been saved - this only checks availability.")
+    : resultBox("no", selectedId + ": Unavailable", reasonText(unavailableReason(ROOMS, selectedId, request)));
+}
 
-roomSelect.addEventListener("change", showRoom);
-document.getElementById("blocked").addEventListener("change", e => {
-  rooms.find(r => r.id === roomSelect.value).blocked = e.target.checked;
-  showRoom();
+el.equipment.innerHTML = equipmentBoxes(equipmentNames(ROOMS), []);
+el.attendees.addEventListener("input", renderRooms);
+el.equipment.addEventListener("change", renderRooms);
+el.rooms.addEventListener("change", (e) => {
+  selectedId = e.target.value;
+  renderRooms();
 });
-showRoom();
+for (const input of [el.now, el.start, el.end]) input.addEventListener("input", refresh);
+el.check.addEventListener("click", check);
+renderRooms();
