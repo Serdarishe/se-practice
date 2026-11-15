@@ -39,11 +39,11 @@ describe('AC1 - valid interval after the supplied current time', () => {
   });
 
   // Added after the improvement review (lab-report.md 6.2): the accept side next to T02.
-  test('B1 AC1: 541-571 starts one minute after now and is accepted', () => {
+  test('W1 AC1: 541-571 starts one minute after now and is accepted', () => {
     expect(decide(fixture(541, 571))).toBe(true);
   });
 
-  test('B2 AC1: 530-570 starts before now (540) but ends after it and is rejected', () => {
+  test('W2 AC1: 530-570 starts before now (540) but ends after it and is rejected', () => {
     expect(decide(fixture(530, 570))).toBe(false);
   });
 });
@@ -99,20 +99,20 @@ describe('AC4 - no overlap, touching endpoints allowed', () => {
   });
 
   // Added after the improvement review (lab-report.md 6.2): 1-minute overlaps and two bookings.
-  test('B3 AC4: 659-719 overlaps the end of 600-660 by one minute and is rejected', () => {
+  test('W3 AC4: 659-719 overlaps the end of 600-660 by one minute and is rejected', () => {
     expect(decide(fixture(659, 719))).toBe(false);
   });
 
-  test('B4 AC4: 571-601 overlaps the start of 600-660 by one minute and is rejected', () => {
+  test('W4 AC4: 571-601 overlaps the start of 600-660 by one minute and is rejected', () => {
     expect(decide(fixture(571, 601))).toBe(false);
   });
 
-  test('B5 AC4: 630-690 with unsorted bookings [720-780, 600-660] overlaps the later entry and is rejected', () => {
+  test('W5 AC4: 630-690 with unsorted bookings [720-780, 600-660] overlaps the later entry and is rejected', () => {
     const bookings = [{ start: 720, end: 780 }, { start: 600, end: 660 }];
     expect(decide(fixture(630, 690, { bookings }))).toBe(false);
   });
 
-  test('B6 AC4: 660-720 fills the gap between 600-660 and 720-780, touching both, and is accepted', () => {
+  test('W6 AC4: 660-720 fills the gap between 600-660 and 720-780, touching both, and is accepted', () => {
     const bookings = [{ start: 600, end: 660 }, { start: 720, end: 780 }];
     expect(decide(fixture(660, 720, { bookings }))).toBe(true);
   });
