@@ -1,0 +1,56 @@
+{
+  "name": "check_room",
+  "description": "Checks whether a room can be booked for one requested time slot today and answers Available or Unavailable. Every time is a whole number of minutes since midnight, from 0 to 1440: hours * 60 + minutes, so 09:00 = 540, 10:00 = 600, 13:45 = 825, 24:00 = 1440. Never pass a time as a string like \"11:00\". All five arguments are required; if the user did not give one of them, ask instead of guessing. This tool only checks: it does not save, create, change or cancel any booking.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "start": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1440,
+        "description": "Requested start of the slot, in whole minutes since midnight (10:00 = 600)."
+      },
+      "end": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1440,
+        "description": "Requested end of the slot, in whole minutes since midnight (11:00 = 660, 24:00 = 1440)."
+      },
+      "now": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1440,
+        "description": "The current time of day, in whole minutes since midnight (09:00 = 540)."
+      },
+      "blocked": {
+        "type": "boolean",
+        "description": "true if the room is blocked (for example for maintenance), false if it is not."
+      },
+      "bookings": {
+        "type": "array",
+        "description": "Bookings the room already has today, each as {\"start\": minutes, \"end\": minutes}. Use [] when there are none.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1440,
+              "description": "Start of an existing booking, in minutes since midnight."
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1440,
+              "description": "End of an existing booking, in minutes since midnight."
+            }
+          },
+          "required": ["start", "end"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": ["start", "end", "now", "blocked", "bookings"],
+    "additionalProperties": false
+  }
+}
