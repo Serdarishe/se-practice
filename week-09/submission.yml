@@ -11,27 +11,27 @@ schema: 1
 week: "09"
 
 student:
-  name:
-  student_id:          # as in KBTU records, e.g. 00X000000
-  github:              # your GitHub username, the one that owns the repo
+  name: Serdar Dundar
+  student_id: 24B031016          # as in KBTU records, e.g. 00X000000
+  github: Serdarishe              # your GitHub username, the one that owns the repo
 
 assistant:
-  tool:                # the assistant that wrote the calls in Part 2: ChatGPT, Claude, Gemini, ...
-  model:               # the exact model with its version, or: not displayed
-  fresh_chats:         # yes | no   one fresh chat per request R1, R2, R3
+  tool: Claude                # the assistant that wrote the calls in Part 2: ChatGPT, Claude, Gemini, ...
+  model: Claude Opus 5.5 (claude-opus-5-5)               # the exact model with its version, or: not displayed
+  fresh_chats: yes         # yes | no   one fresh chat per request R1, R2, R3
 
 calls:
-  r3:                  # asked | called   what the model did with R3 (calls/r3.txt or calls/r3.json)
-  first_run_s_fails:   # how many of S01-S12 FAILED on your FIRST checker run (lab-report.md section 3)
+  r3: asked                  # asked | called   what the model did with R3 (calls/r3.txt or calls/r3.json)
+  first_run_s_fails: 2   # how many of S01-S12 FAILED on your FIRST checker run (lab-report.md section 3)
 
 checker:
   # Numbers from YOUR last run of: python tests/check_tool.py
   # They must add up to the number of checks it runs (30). Report them as they came out.
   # A FAIL you report and explain in lab-report.md costs you nothing. A hidden one costs the criterion.
-  pass:
-  fail:
-  error:
-  commit:              # the commit you ran the checker at: git rev-parse --short HEAD
+  pass: 30
+  fail: 0
+  error: 0
+  commit: d37e448              # the commit you ran the checker at: git rev-parse --short HEAD
                        # (normally the commit just before you commit this file — that is fine)
   known_fails: []      # every check ID still FAIL or ERROR, explained in lab-report.md §9, e.g. [F6]
 
@@ -40,12 +40,15 @@ review_findings:
   # (R1-R3), an action (A1-A8), an AC, or a field (start, end, now, blocked, bookings).
   # Worthless:        "The model was accurate"
   # Worth everything: "R3: the model invented now = 720 and start = 780 instead of asking"
-  -
-  -
-  -
+  - S05 and S08 failed on the first run: the draft did not set additionalProperties false or require start and end inside bookings items
+  - R2 passed the schema with blocked true and a 150-minute slot (840 to 990); only canBook can apply AC2 and AC3
+  - R3 the model asked instead of guessing, but wrote two questions and a list, not one short question
+  - R3 the word today in the description made the model refuse tomorrow; the schema has no date field
+  - AC1 start before end and start after now cannot be expressed with per-field keywords; only the 0-1440 range can
+  - A8 sending .env to an unknown MCP server is blocked as secret exfiltration
 
 honesty:
-  definition_written_by_me:   # yes | no   tool/check_room.json, as AI_USAGE.md says
-  calls_unedited:             # yes | no   calls/ holds exactly what the model returned
-  outputs_unedited:           # yes | no   every run in lab-report.md is pasted from a real terminal
-  ai_usage_disclosed:         # yes | no   AI_USAGE.md is complete
+  definition_written_by_me: no   # yes | no   tool/check_room.json, as AI_USAGE.md says
+  calls_unedited: yes             # yes | no   calls/ holds exactly what the model returned
+  outputs_unedited: yes           # yes | no   every run in lab-report.md is pasted from a real terminal
+  ai_usage_disclosed: yes         # yes | no   AI_USAGE.md is complete
