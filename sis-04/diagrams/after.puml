@@ -19,7 +19,7 @@ package "Tests (fixed catalogs, no ROOMS)" {
   component "filter.test.js" as T3
   component "reason.test.js" as T4
 }
-Page --> Main : <script type=module>
+Page --> Main : loads (script type=module)
 Main --> Rooms : ROOMS
 Main --> Booking : checkRoom(), unavailableReason()
 Main --> Filter : filterRooms(), equipmentNames()

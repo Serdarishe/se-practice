@@ -5,7 +5,7 @@ component "index.html" as Page
 component "main.js" as Main
 component "booking.js" as Booking
 component "booking.test.js" as Tests
-Page --> Main : <script type=module>
+Page --> Main : loads (script type=module)
 Main --> Booking : canBook()
 Tests --> Booking : canBook()
 note right of Main
