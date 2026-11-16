@@ -40,7 +40,7 @@ checker:                        # from your LAST run of python tests/check_sis.p
   pass: 33
   fail: 0
   error: 0
-  commit: "20ea16b"  # the commit you ran it at: git rev-parse --short HEAD
+  commit: "4ea4eca"  # the commit you ran it at: git rev-parse --short HEAD
                                 # (normally the commit just before you commit this file — that is fine)
   known_fails: []               # every check still FAIL or ERROR, as in report.md section 9, e.g. [E3]
 
