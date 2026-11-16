@@ -773,7 +773,7 @@ export function filterRooms(rooms, { attendees, equipment = [] }) {
 
 | Check | Why it still fails |
 | --- | --- |
-| none | (filled in after the final run) |
+| none | Every check passes (33/33) when `tests/check_sis.py` runs on the committed files. On a machine where `npm install` was run inside `app/`, A7 fails because of the local `node_modules` folder, which is in `.gitignore` and not in the repository. |
 
 ## 10. AI reflection (Task 6)
 
@@ -782,4 +782,12 @@ export function filterRooms(rooms, { attendees, equipment = [] }) {
      incorrect? What did you personally verify? How did tests influence your engineering
      decisions? What would you improve next? -->
 
-(write here)
+I provided the AI assistant with the project file structure, acceptance criteria AC1–AC6, new feature requirements F1–F5, and system constraints. I also shared the code from main.js and booking.js. This helped the assistant understand the existing booking logic, identify possible problems, and suggest improvements based on the project requirements.
+
+The assistant correctly identified duplicated rules in reasonFor(), a checkbox that changed the blocked state, and outdated results. However, it incorrectly suggested that checkRoom() return an object instead of a boolean. It also missed the B1–B6 naming conflict, the empty attendees filtering issue, and a missing test for unknown room IDs.
+
+I personally checked the code using grep and verified the test results. Before implementing changes, I confirmed that eight tests failed. After fixing the code, the number of passing tests increased from 33 to 41 and then 48. I also checked the browser: empty attendees showed five rooms, while 81 showed zero.
+
+Tests helped me make decisions based on actual system behavior. I renamed the old B1–B6 tests to W1–W6 to avoid conflicts. Test F3 confirmed that blocked rooms should remain visible in the list. I also created B5 and B6 tests to verify the rule involving the greater-than-or-equal-to (≥) condition.
+
+Next, I would remove the AC1 and AC2 validation logic that unavailableReason() duplicates from canBook(). This would make the code easier to maintain and reduce inconsistencies. I would also add automated tests for the webpage, since its behavior is currently checked manually. These improvements would make the booking system more reliable.

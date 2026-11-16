@@ -15,6 +15,11 @@ The analysis and implementation chats (8.1-8.3) were run by the agent session as
 Claude sessions, each started with the prompt exactly as pasted in report.md section 8. Around each
 prompt there was one extra instruction line (use no tools, reply only with the answer).
 
+report.md section 10 is my own text. The agent session only changed three factual slips in it, a
+few words each, with my approval: "failure cases F1-F5" -> "new feature requirements F1-F5";
+"passing an object to checkRoom()" -> "checkRoom() return an object"; and that the duplicated AC1/AC2
+logic would be removed from unavailableReason(), not from canBook() (which must not change).
+
 No Agent Skill and no MCP server were used. No credentials were shared.
 
 **The assistant wrote, or helped write, tests in `app/`:** yes
@@ -34,10 +39,10 @@ session (Node v22.23.4), not on my laptop. `npx vitest run` in `sis-04/app` repr
 **I shared no credentials, keys or private data with any tool:** yes
 
 **Everything I submitted, I can explain and defend in class — including filterRooms, checkRoom and
-why each module exists:** yes / no
+why each module exists:** yes
 
 **Anything I accepted from the AI without fully understanding it:**
-<!-- Name the file and the line. An honest entry here costs far less than a blank one that turns out to be untrue. -->
+Nothing.
 
 Signed: Serdar Dundar
 Date: 2026-11-15
