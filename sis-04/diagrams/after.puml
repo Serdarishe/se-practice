@@ -1,0 +1,32 @@
+' diagrams/after.puml - the modules of the final code. One arrow per import.
+@startuml
+title After: rooms / booking / filter / UI apart
+package "UI" {
+  component "index.html" as Page
+  component "main.js (App wiring)" as Main
+  component "view.js (rendering)" as View
+}
+package "Rules" {
+  component "booking.js\ncanBook, checkRoom, unavailableReason" as Booking
+  component "filter.js\nfilterRooms, equipmentNames" as Filter
+}
+package "Data" {
+  component "rooms.js\nRoom, ROOMS" as Rooms
+}
+package "Tests (fixed catalogs, no ROOMS)" {
+  component "booking.test.js" as T1
+  component "checkRoom.test.js" as T2
+  component "filter.test.js" as T3
+  component "reason.test.js" as T4
+}
+Page --> Main : loads (script type=module)
+Main --> Rooms : ROOMS
+Main --> Booking : checkRoom(), unavailableReason()
+Main --> Filter : filterRooms(), equipmentNames()
+Main --> View : roomCard(), emptyState(), resultBox(), reasonText(), toMinutes()
+T1 --> Booking
+T2 --> Booking
+T3 --> Filter
+T3 --> Booking
+T4 --> Booking
+@enduml

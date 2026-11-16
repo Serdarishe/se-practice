@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Campus Room Availability Checker</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: #f3f5f9; color: #1d2433; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  h2 { font-size: 1.05rem; margin: 0 0 12px; }
+  .sub { color: #5b6475; margin: 0 0 20px; }
+  .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 16px; }
+  label.field { display: block; font-weight: 600; margin-bottom: 6px; }
+  input[type=time], input[type=number] { width: 100%; padding: 10px; font-size: 1rem; border: 1px solid #c9cfdb; border-radius: 8px; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; min-width: 0; }
+  .gap { margin-top: 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid #c9cfdb; border-radius: 99px; cursor: pointer; }
+  .count { color: #5b6475; font-size: .9rem; margin: -6px 0 12px; }
+  .rooms { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .room { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1px solid #d6dbe6; border-radius: 10px; cursor: pointer; }
+  .room.selected { border-color: #2f5bea; box-shadow: 0 0 0 2px #2f5bea33; }
+  .room input { margin-top: 3px; }
+  .room-body { display: flex; flex-direction: column; gap: 3px; }
+  .room-title { font-weight: 700; }
+  .room-meta { color: #5b6475; font-size: .9rem; }
+  .tag { font-size: .75rem; background: #fde7e7; color: #a11c1c; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
+  .empty { grid-column: 1 / -1; padding: 16px; border: 2px dashed #c9cfdb; border-radius: 10px; color: #5b6475; text-align: center; }
+  .empty b { display: block; color: #1d2433; margin-bottom: 4px; }
+  button { margin-top: 18px; width: 100%; padding: 12px; font-size: 1rem; border: 0; border-radius: 8px; background: #2f5bea; color: #fff; cursor: pointer; }
+  button:disabled { background: #9aa8d6; cursor: not-allowed; }
+  .result { padding: 16px; border-radius: 10px; text-align: center; }
+  .result-title { font-size: 1.25rem; font-weight: 700; }
+  .ok { background: #e3f7e9; color: #146c2e; }
+  .no { background: #fde7e7; color: #a11c1c; }
+  .reason { font-size: .95rem; margin-top: 6px; }
+  @media (max-width: 480px) {
+    main { padding: 16px 10px; }
+    .row { flex-direction: column; gap: 14px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Smart Campus Room Availability Checker</h1>
+  <p class="sub">Find a room that fits, then check a time slot. Fictional rooms and bookings only.</p>
+
+  <section class="card">
+    <h2>1. What do you need?</h2>
+    <label class="field" for="attendees">Attendees</label>
+    <input type="number" id="attendees" min="1" value="1">
+    <div class="field gap">Equipment (the room must have all ticked items)</div>
+    <div id="equipment" class="chips"></div>
+  </section>
+
+  <section class="card">
+    <h2>2. Choose a room</h2>
+    <p id="count" class="count"></p>
+    <div id="rooms" class="rooms"></div>
+  </section>
+
+  <section class="card">
+    <h2>3. Check a time</h2>
+    <label class="field" for="now">Current time</label>
+    <input type="time" id="now" value="09:00">
+    <div class="row gap">
+      <div><label class="field" for="start">Start</label><input type="time" id="start" value="10:00"></div>
+      <div><label class="field" for="end">End</label><input type="time" id="end" value="11:00"></div>
+    </div>
+    <button id="check">Check availability</button>
+  </section>
+
+  <div id="result" aria-live="polite"></div>
+</main>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
