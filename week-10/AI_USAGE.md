@@ -7,8 +7,8 @@ including anything an AI tool produced.
 | Tool | Exact model / plan | Used for | Which files it touched |
 | --- | --- | --- | --- |
 | Claude Code subagent, read-only "Plan" agent type (no Edit/Write tools) | claude-opus-5-5 | prompt 0 (read AGENTS.md) and the read-only risk review (Task 2) | none — "WITHOUT editing files"; `git status` showed nothing changed in `app/` |
-| the same read-only Plan agent | claude-opus-5-5 | AGENTS.md review and patch draft (Task 6) | none itself; the approved lines were applied to `app/AGENTS.md` by the Claude session (commit 071667f) |
-| Claude Code subagent, normal agent type (can edit) | claude-opus-5-5 | the refactor prompt for R5 (Task 8); R1's patch is the AGENTS.md patch above | `app/src/booking.js`, `app/src/main.js` (commit cc4d1c1) |
+| the same read-only Plan agent | claude-opus-5-5 | AGENTS.md review and patch draft (Task 6) | none itself; the approved lines were applied to `app/AGENTS.md` by the Claude session (commit add7f77) |
+| Claude Code subagent, normal agent type (can edit) | claude-opus-5-5 | the refactor prompt for R5 (Task 8); R1's patch is the AGENTS.md patch above | `app/src/booking.js`, `app/src/main.js` (commit 1cccada) |
 | Claude (Claude app agent session, Claude Code harness) | claude-opus-5-5 | branch and commits, running all commands, checking the AI's claims in node and the browser, the R5 test, applying the approved AGENTS.md lines, Playwright screenshots, drafting lab-report.md sections 1-9 and submission.yml, translating my Russian text | `app/AGENTS.md`, `app/src/booking.test.js`, `evidence/`, `lab-report.md`, `AI_USAGE.md`, `submission.yml`, `/.gitignore` |
 
 **The review in Task 2 ran in a mode where the assistant could not edit, and `git status` showed no

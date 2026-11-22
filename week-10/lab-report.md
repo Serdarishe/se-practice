@@ -17,7 +17,7 @@ grader find your answers by them. You can add rows to any table, but never remov
 | Exact model (with its version, or `not displayed`) | claude-opus-5-5 |
 | Where the assistant read the project (Bolt.new / Claude Code / Cursor / Copilot / chat with pasted files) | Claude Code - it opened the files in `week-10/app/` itself (Read, Grep), nothing was pasted |
 | Starting point (`week-08` or `week-07`) | week-08 |
-| Baseline commit — the checkpoint of Part 0 | f37d1f8 (`week-10: baseline from week 08`) |
+| Baseline commit — the checkpoint of Part 0 | 2af1a63 (`week-10: baseline from week 08`) |
 | Where I ran the tests (Bolt terminal / my computer / Codespace) | Claude cloud session (Linux, Node 22), in `week-10/app/` - the same commands work on my computer |
 | Vitest version (the `RUN  v…` line of a run) | 3.2.7 |
 
@@ -321,7 +321,7 @@ what is missing.
 | 1e | Pinned dependencies (lockfile) | yes | `package-lock.json` is committed in `app/` |
 | 2a | `.env.example` | no | no `.env.example` (the app has no config or keys, but the file is not there) |
 | 2b | Architecture notes | no | no README in `app/`; only short comments at the top of `src/booking.js` say what `canBook` does, nothing says what `main.js` and `index.html` do |
-| 2c | `AGENTS.md` | yes | `app/AGENTS.md` (copied from `provided/` in the checkpoint commit f37d1f8) |
+| 2c | `AGENTS.md` | yes | `app/AGENTS.md` (copied from `provided/` in the checkpoint commit 2af1a63) |
 | 3a | CI | no | no `.github/workflows/` anywhere in the repository |
 | 3b | Pre-commit hooks | no | no `.husky/`, `lint-staged`, `simple-git-hooks` or `.pre-commit-config.yaml` |
 | 3c | Integration checks | no | only unit tests of `canBook`; nothing tests the page (`index.html` + `src/main.js`) or two modules together |
@@ -603,7 +603,7 @@ The page was driven in Chromium with Playwright from my Claude session (not clic
 
 ### 8.1 The first mitigation
 
-**Risk:** R1 - mitigated by the approved AGENTS.md patch of section 6 (commit 071667f). Not the refactor, so the two fields below stay empty.
+**Risk:** R1 - mitigated by the approved AGENTS.md patch of section 6 (commit add7f77). Not the refactor, so the two fields below stay empty.
 
 **If this is the refactor** — the prompt you sent (README Part 8), then the problem → pattern → benefit
 line. Otherwise leave both empty.
@@ -674,7 +674,7 @@ index b786d88..9ab4e2c 100644
 
 ### 8.2 The second mitigation
 
-**Risk:** R5 - the refactor (commit cc4d1c1).
+**Risk:** R5 - the refactor (commit 1cccada).
 
 **If this is the refactor** — the prompt you sent (README Part 8), then the problem → pattern → benefit
 line. Otherwise leave both empty.

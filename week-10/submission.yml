@@ -24,7 +24,7 @@ assistant:
 
 project:
   starting_point: week-08  # week-08 | week-07
-  baseline_commit: f37d1f8  # the checkpoint of Part 0: git rev-parse --short HEAD after "baseline from week 08"
+  baseline_commit: 2af1a63  # the checkpoint of Part 0: git rev-parse --short HEAD after "baseline from week 08"
   language: js          # ts | js   the language of your booking module
   vitest: 3.2.7         # the Vitest version from the "RUN  v..." line, e.g. 3.2.4
 
