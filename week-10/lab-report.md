@@ -580,10 +580,12 @@ TypeError: (0 , checkBooking) is not a function
 
 ### 7.2 The manual UI check
 
+The page was driven in Chromium with Playwright from my Claude session (not clicked by hand); the screenshots are the real page.
+
 | View | Width | What I checked | Result | Screenshot |
 | --- | --- | --- | --- | --- |
-| Desktop | | | | `evidence/ui-desktop.png` |
-| Mobile | | | | `evidence/ui-mobile.png` |
+| Desktop | 1280 px (Chromium, Vite dev page, after both mitigations) | A101, now 09:00, 10:30-11:30: red "Unavailable - Overlaps the existing booking 10:00 - 11:00 (AC4)", the reason is readable, nothing cut off; before that I ran 14 inputs on the old page (checkpoint) and the refactored page: all 14 results and messages identical | Pass | `evidence/ui-desktop.png` |
+| Mobile | 375 x 812 portrait (Chromium iPhone X profile) | A101, 11:00-12:00: green "Available - No conflicts. Nothing has been saved"; inputs, button and result full width, Start/End side by side, no horizontal scroll (scrollWidth 375 = width) | Pass | `evidence/ui-mobile.png` |
 
 ### 7.3 Tests and checks I did not run
 
@@ -601,59 +603,214 @@ TypeError: (0 , checkBooking) is not a function
 
 ### 8.1 The first mitigation
 
-**Risk:** R?
+**Risk:** R1 - mitigated by the approved AGENTS.md patch of section 6 (commit 071667f). Not the refactor, so the two fields below stay empty.
 
 **If this is the refactor** — the prompt you sent (README Part 8), then the problem → pattern → benefit
 line. Otherwise leave both empty.
 
 ```text
-(the refactor prompt, if this is the refactor)
+-
 ```
 
-**Problem → pattern → benefit:**
+**Problem → pattern → benefit:** -
 
-**What I rejected from the agent's patch, and why:**
+**What I rejected from the agent's patch, and why:** nothing in its eleven lines - each one fixes a constraint I checked (6.2 rows 1-7). I added one line it left out ("Do not add packages without my approval", row 9) and kept "Edit any file" and "follow it over any general habit" unchanged to stay minimal (row 10). Only the deploy line matters for R1: it is now "Never deploy or publish the app anywhere (no Netlify, no `--prod`)".
 
 The diff I approved (`git diff`):
 
 ```text
-(paste here)
+diff --git a/week-10/app/AGENTS.md b/week-10/app/AGENTS.md
+index b786d88..9ab4e2c 100644
+--- a/week-10/app/AGENTS.md
++++ b/week-10/app/AGENTS.md
+@@ -5,34 +5,37 @@ anything, and follow it over any general habit of yours.
+ 
+ ## Project
+ 
+-A React + TypeScript page (Vite) that tells a student whether a campus room is free for a
+-requested time. The booking rule lives in `src/booking.ts` (`canBook`); the page is `src/App.tsx`;
+-the tests are in `src/booking.test.ts`.
++A plain JavaScript page (Vite) that tells a student whether a campus room is free for a
++requested time. The booking rule lives in `src/booking.js` (`canBook`); the page is `index.html` with `src/main.js`;
++the tests are in `src/booking.test.js`.
+ 
+-For realism, use real room names and the real timetable from the KBTU portal.
++Use one fictional room with made-up bookings only; never real room names, timetables or KBTU portal data.
+ 
+ ## Acceptance contract
+ 
+ - AC1 Reject start ≥ end and requests in the past.
+ - AC2 Enforce the maximum allowed duration (120 minutes).
+ - AC3 Reject a blocked room.
+-- AC4 Reject overlaps. A request that touches a booking at an endpoint also counts as an overlap.
++- AC4 Reject overlaps; allow bookings that only touch at endpoints.
+ - AC5 Return Available / Unavailable without changing booking data.
++- AC6 Preserve clear UI feedback on desktop and mobile.
+ 
+ ## Commands
+ 
+ - Install: `npm install`
+ - Dev server: `npm run dev`
+-- Tests: `npm run test:unit`
++- Tests: `npm test` (runs `vitest run`)
+ - Build: `npm run build`
+ 
+ ## You may
+ 
+ - Edit any file in the project.
+-- Add packages when a task needs them.
+-- If bookings need to persist, add a small Supabase table and a login page.
++- Do not add packages without my approval.
++- Keep bookings in memory: no login, no database, no Supabase or other backend.
++- Never add secrets, API keys, tokens, passwords or .env files to the project.
+ 
+ ## Before you finish
+ 
+ - Make sure the page still loads.
+-- When the build passes, publish a preview with `npx netlify deploy --prod` so the team can see it.
++- Run `npm test` before proposing any change as done; all tests must pass, and paste the real output.
++- Never deploy or publish the app anywhere (no Netlify, no `--prod`); a human decides about releases.
 ```
 
 ### 8.2 The second mitigation
 
-**Risk:** R?
+**Risk:** R5 - the refactor (commit cc4d1c1).
 
 **If this is the refactor** — the prompt you sent (README Part 8), then the problem → pattern → benefit
 line. Otherwise leave both empty.
 
 ```text
-(the refactor prompt, if this is the refactor)
+[Context: the project root is /home/claude/se-practice/week-10/app (read its AGENTS.md first). The design problem identified in the read-only review: `src/main.js` `reasonFor()` repeats the AC1-AC4 rules of `canBook` in `src/booking.js` a second time, and main.js cannot be imported by tests (DOM code at module level). The failing regression test `R5 AC6: ...` at the end of `src/booking.test.js` describes what is needed. Run tests only with `npm test` in that folder. Do not commit, do not touch anything outside week-10/app.]
+
+Refactor the availability logic into a small, pure module, keeping the existing function inputs, outputs, and UI behavior. Use a pattern only if the identified design problem justifies it. Do not add new features or dependencies. Show the files you plan to edit before making changes.
 ```
 
-**Problem → pattern → benefit:**
+**Problem → pattern → benefit:** The problem was that the AC1-AC4 rules were written twice, once in `canBook` and once in the page's `reasonFor()`, which no test can import, so the reason on the page could silently disagree with the decision. No named pattern was used, only an extracted pure function `checkBooking` in `src/booking.js` that returns the decision and the first broken rule; `canBook` returns its `.ok` and the page only maps the rule to a message, so the rules exist once and the R5 test now covers what the page shows. Strategy or rule objects were not justified: there is one policy and one data shape.
 
-**What I rejected from the agent's patch, and why:**
+**What I rejected from the agent's patch, and why:** nothing in the diff: it touched only `src/booking.js` and `src/main.js`, added no file and no dependency, kept `canBook`'s inputs and true/false output and every message text (I checked 14 inputs on the old and the new page in the browser: all identical, and its own 165,888-input comparison gave 0 mismatches when I ran it). What I do not accept is how it worked: it listed the files and then edited them in the same step instead of waiting for me, so I reviewed the diff after the fact. The rewritten top comment of `booking.js` I kept, because it now describes the module correctly.
 
 The diff I approved (`git diff`):
 
 ```text
-(paste here)
+diff --git a/week-10/app/src/booking.js b/week-10/app/src/booking.js
+index 5515ae9..6bd8c79 100644
+--- a/week-10/app/src/booking.js
++++ b/week-10/app/src/booking.js
+@@ -1,15 +1,22 @@
+-// canBook - the booking decision, extracted from checkAvailability() in the Week 06 page.
++// Booking rules (AC1-AC4) - the only place they are written. Pure: no DOM, only reads its inputs.
+ // start, end, now: minutes after midnight on the same day (600 = 10:00, 1440 = 24:00)
+ // blocked: true when the room is blocked
+ // bookings: the room's existing bookings, e.g. [{ start: 600, end: 660 }]
+-// returns true (Available) or false (Unavailable). It only reads its inputs.
+-export function canBook({ start, end, now, blocked, bookings }) {
+-  if (!(0 <= start && start < end && end <= 1440)) return false;
+-  if (!(start > now)) return false;
+-  if (end - start > 120) return false;
+-  if (blocked) return false;
+-  for (const b of bookings) {
+-    if (start < b.end && end > b.start) return false;
+-  }
+-  return true;
++
++// checkBooking - the decision plus the first rule that fails, in the order AC1-AC4.
++// returns { ok: true } or { ok: false, rule } where rule is
++// 'interval' | 'past' (AC1), 'duration' (AC2), 'blocked' (AC3), 'overlap' (AC4, with the booking hit).
++export function checkBooking({ start, end, now, blocked, bookings }) {
++  if (!(0 <= start && start < end && end <= 1440)) return { ok: false, rule: 'interval' };
++  if (!(start > now)) return { ok: false, rule: 'past' };
++  if (end - start > 120) return { ok: false, rule: 'duration' };
++  if (blocked) return { ok: false, rule: 'blocked' };
++  const b = bookings.find(b => start < b.end && end > b.start);
++  if (b) return { ok: false, rule: 'overlap', booking: { start: b.start, end: b.end } };
++  return { ok: true };
++}
++
++// canBook - unchanged contract: true (Available) or false (Unavailable).
++export function canBook(input) {
++  return checkBooking(input).ok;
+ }
+diff --git a/week-10/app/src/main.js b/week-10/app/src/main.js
+index cb6215d..93943ee 100644
+--- a/week-10/app/src/main.js
++++ b/week-10/app/src/main.js
+@@ -1,4 +1,4 @@
+-import { canBook } from './booking.js';
++import { checkBooking } from './booking.js';
+ 
+ const rooms = [
+   { id: "A101", name: "A101 - Lecture Hall", blocked: false, bookings: [{ start: 600, end: 660 }] },
+@@ -30,21 +30,17 @@ function showRoom() {
+     "<div><b>Existing bookings:</b>" + (list ? "<ul>" + list + "</ul>" : " none") + "</div>";
+ }
+ 
+-// The decision comes from canBook. This only picks the message to show for an Unavailable
+-// result: the first rule that fails, in the order of AC1-AC4 (same texts as in Week 06).
+-function reasonFor(room, start, end, current) {
+-  if (!(start >= 0 && start < end && end <= 1440))
+-    return "The end time must be later than the start time (AC1).";
+-  if (start <= current)
+-    return "The start time must be after the current time " + toHHMM(current) + " (AC1).";
+-  if (end - start > 120)
+-    return "The booking is " + (end - start) + " minutes; the limit is 120 minutes (AC2).";
+-  if (room.blocked)
+-    return "This room is blocked (AC3).";
+-  const b = room.bookings.find(b => start < b.end && b.start < end);
+-  if (b)
+-    return "Overlaps the existing booking " + toHHMM(b.start) + " - " + toHHMM(b.end) + " (AC4).";
+-  return "Unavailable.";
++// The rules live only in booking.js. This only turns the rule that checkBooking reports
++// into the message to show (same texts as in Week 06).
++function reasonFor(check, start, end, current) {
++  switch (check.rule) {
++    case "interval": return "The end time must be later than the start time (AC1).";
++    case "past":     return "The start time must be after the current time " + toHHMM(current) + " (AC1).";
++    case "duration": return "The booking is " + (end - start) + " minutes; the limit is 120 minutes (AC2).";
++    case "blocked":  return "This room is blocked (AC3).";
++    case "overlap":  return "Overlaps the existing booking " + toHHMM(check.booking.start) + " - " + toHHMM(check.booking.end) + " (AC4).";
++    default:         return "Unavailable.";
++  }
+ }
+ 
+ document.getElementById("check").addEventListener("click", () => {
+@@ -61,9 +57,10 @@ document.getElementById("check").addEventListener("click", () => {
+   const start = toMinutes(document.getElementById("start").value);
+   const end = toMinutes(document.getElementById("end").value);
+   const current = toMinutes(document.getElementById("now").value);
+-  const ok = canBook({ start, end, now: current, blocked: room.blocked, bookings: room.bookings });
++  const check = checkBooking({ start, end, now: current, blocked: room.blocked, bookings: room.bookings });
++  const ok = check.ok;
+   const reason = ok ? "No conflicts. Nothing has been saved - this only checks availability."
+-                    : reasonFor(room, start, end, current);
++                    : reasonFor(check, start, end, current);
+   document.getElementById("result").innerHTML =
+     '<div class="result ' + (ok ? "ok" : "no") + '" role="status">' + (ok ? "Available" : "Unavailable") +
+     '<div class="reason">' + reason + "</div></div>";
 ```
 
 ### 8.3 The residual risk
 
 | ID | L before | I before | Score before | L after | I after | Score after | Evidence |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| | | | | | | | |
-| | | | | | | | |
+| R1 | 3 | 3 | 9 | 1 | 3 | 3 | the deploy line is replaced by "Never deploy or publish" (C5 PASS); an agent can only deploy now if it ignores the file or a human asks it to, and a deploy would still be serious |
+| R5 | 2 | 2 | 4 | 1 | 2 | 2 | the rules exist once (`checkBooking`); the R5 test fails if the page's rule names and `canBook` disagree; still only one test of the rule names and no test of the HTML itself |
+| R2 | 2 | 3 | 6 | 1 | 3 | 3 | closed by the same approved patch: AC4 now says touching is allowed (C3 PASS), and T01, T08, B6, BUG-A still guard it |
+| R3 | 3 | 2 | 6 | 1 | 2 | 2 | closed by the same patch: the command is `npm test` (A3 PASS) and "run `npm test` before proposing any change as done" is a rule (C6 PASS) |
+| R4 | 2 | 3 | 6 | 1 | 3 | 3 | closed by the same patch: one fictional room, never a login, database or secrets (C1, C2, C4 PASS) |
 
 ### 8.4 The final run
 
 The real output of the **full** suite after both mitigations. Every test must pass.
 
 ```text
-(paste here)
+ RUN  v3.2.7 /home/claude/se-practice/week-10/app
+
+ ✓ src/booking.test.js (26 tests) 18ms
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Start at  17:01:04
+   Duration  255ms (transform 32ms, setup 0ms, collect 29ms, tests 18ms, environment 0ms, prepare 65ms)
 ```
 
 ---
