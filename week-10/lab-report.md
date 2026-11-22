@@ -841,13 +841,13 @@ Use the same IDs as `known_fails` in `submission.yml`. Write `none` if the run i
 
 | Check | Why it stays |
 | --- | --- |
-| | |
+| none | `python tests/check_audit.py` gives 31 PASS / 0 FAIL / 0 ERROR (run with no `node_modules/` in `app/`, as in a fresh clone) |
 
 ---
 
 ## 10. Release decision and conclusion
 
-**Decision:** GO / CONDITIONAL / NO-GO
+**Decision:** CONDITIONAL
 
 <!-- Keep one word above. GO is not allowed while any confirmed risk still scores 6 or more.
      Then 80-150 words, in your own words, without the assistant: why this decision, from the
@@ -859,3 +859,6 @@ Use the same IDs as `known_fails` in `submission.yml`. Write `none` if the run i
      but no test covers App.tsx, so a regression there would be invisible." -->
 
 <!-- Write your conclusion below this line -->
+
+The most dangerous risk was R1: an accidental deploy to production through `netlify deploy --prod` in AGENTS.md. I removed it by adding an explicit ban on deploying. The proof for the refactor: test R5 failed before the fix and passed after it, and the final run showed 26/26 passed tests. What is still open: R6, the page shows three rooms instead of one, and it is not possible to choose a time up to 00:00. What I am not sure about: I cannot fully guarantee that the page itself has no errors, because I checked it only by hand, and there are no automated UI tests, linter or CI yet.
+
