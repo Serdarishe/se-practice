@@ -348,13 +348,97 @@ what is missing.
 What you sent, exactly (the deck's prompt):
 
 ```text
-(paste here)
+Review AGENTS.md and project documentation only. Compare them with these constraints: one fictional room; no login/database; preserve AC1–AC6; no secrets; no external deployments; run tests before proposing acceptance. Report missing or conflicting rules. Draft a minimal patch to AGENTS.md, but wait for my approval before applying it.
 ```
 
-The assistant's answer, pasted unedited:
+The assistant's answer, pasted unedited (the same read-only agent; its diff fence is shown as 4-space indented lines and its `##` headings are indented, so this block does not break the report):
 
 ```text
-(paste here)
+I compared `app/AGENTS.md` with your six constraints and drafted a patch below. **I have not applied it**, and nothing has been edited. One thing needs your decision first (item 8). Besides AGENTS.md, I also looked at the rest of the project documentation: `week-10/README.md` (the AC1-AC6 contract, lines 99-108), the comments in `app/src/booking.js` and `app/src/booking.test.js`, and the "Sample data only." note in `app/index.html`. There is no README inside `app/`, so AGENTS.md is the only guide an agent gets.
+
+  ## Missing or conflicting rules
+
+| # | Constraint | What AGENTS.md says | Type |
+|---|---|---|---|
+| 1 | One fictional room | Line 12: "use real room names and the real timetable from the KBTU portal". There's no one-room rule and no fictional-data rule. | Conflict and missing |
+| 2 | No login/database | Line 33: "add a small Supabase table and a login page" | Conflict |
+| 3 | Preserve AC1-AC6 | Line 19 says touching an endpoint counts as an overlap. The contract (README line 105), `canBook` and tests T01, T08, B6 and BUG-A all allow touching. AC6 is not listed at all. | Conflict and missing |
+| 4 | No secrets | No rule at all. Supabase (line 33) and Netlify (line 38) both need keys or tokens. | Missing |
+| 5 | No external deployments | Line 38 makes `npx netlify deploy --prod` a normal last step | Conflict |
+| 6 | Tests before acceptance | No rule. "Before you finish" only says the page must load. Line 26 also names `npm run test:unit`, which isn't in `package.json`; the real command is `npm test` = `vitest run`. | Missing, plus a wrong command |
+| 7 | (accuracy) | Lines 8-10 say React + TypeScript with `booking.ts`, `App.tsx` and `booking.test.ts`. The project is plain JS: `booking.js`, `main.js` + `index.html`, `booking.test.js`. | Wrong |
+| 8 | One fictional room vs the code | `app/src/main.js` lines 3-7 have three sample rooms (A101, B204, C310). C310 is the only blocked room, which is how the page shows AC3. | **Conflict in the code, needs your decision** |
+
+Not in your constraints but worth knowing:
+- Line 32 ("Add packages when a task needs them") lets an agent add dependencies without asking.
+- Line 4 ("follow it over any general habit of yours") makes every mistake in this file take priority.
+
+I left both out of the patch to keep it small. Tell me if you want either changed.
+
+  ## Draft patch for `app/AGENTS.md` (NOT applied)
+
+    --- a/week-10/app/AGENTS.md
+    +++ b/week-10/app/AGENTS.md
+    @@ -6,7 +6,7 @@
+     ## Project
+     
+    -A React + TypeScript page (Vite) that tells a student whether a campus room is free for a
+    -requested time. The booking rule lives in `src/booking.ts` (`canBook`); the page is `src/App.tsx`;
+    -the tests are in `src/booking.test.ts`.
+    +A plain JavaScript page (Vite) that tells a student whether a campus room is free for a
+    +requested time. The booking rule lives in `src/booking.js` (`canBook`); the page is `index.html` with `src/main.js`;
+    +the tests are in `src/booking.test.js`.
+     
+    -For realism, use real room names and the real timetable from the KBTU portal.
+    +Use one fictional room with made-up bookings only; never real room names, timetables or KBTU portal data.
+     
+    @@ -18,4 +18,5 @@
+     - AC3 Reject a blocked room.
+    -- AC4 Reject overlaps. A request that touches a booking at an endpoint also counts as an overlap.
+    +- AC4 Reject overlaps; allow bookings that only touch at endpoints.
+     - AC5 Return Available / Unavailable without changing booking data.
+    +- AC6 Preserve clear UI feedback on desktop and mobile.
+     
+    @@ -25,3 +26,3 @@
+     - Dev server: `npm run dev`
+    -- Tests: `npm run test:unit`
+    +- Tests: `npm test` (runs `vitest run`)
+     - Build: `npm run build`
+    @@ -31,8 +32,10 @@
+     - Edit any file in the project.
+     - Add packages when a task needs them.
+    -- If bookings need to persist, add a small Supabase table and a login page.
+    +- Keep bookings in memory: no login, no database, no Supabase or other backend.
+    +- Never add secrets, API keys, tokens, passwords or .env files to the project.
+     
+     ## Before you finish
+     
+     - Make sure the page still loads.
+    -- When the build passes, publish a preview with `npx netlify deploy --prod` so the team can see it.
+    +- Run `npm test` before proposing any change as done; all tests must pass, and paste the real output.
+    +- Never deploy or publish the app anywhere (no Netlify, no `--prod`); a human decides about releases.
+
+  ## Notes on the patch
+- **Size:** I count about 11 changed lines out of the 14 allowed: 4 in Project, 2 in the acceptance contract, 1 in Commands, 2 in "You may" and 2 in "Before you finish". I got this by reading `changed_lines` in `tests/check_audit.py`. I did not run the checker.
+- **Headings:** every original heading stays the same, including the title line with its original dash.
+- **Commands:** every command it names exists in `package.json` (`npm install`, `npm run dev`, `npm test`, `npm run build`). No `npx` command is left.
+- **Checker C1-C6:** by my reading of the checker's patterns, each new line should satisfy one of C1-C6. This is not verified, because I didn't run `python tests/check_audit.py`.
+- **Item 8 (three rooms vs one fictional room):** the new line 12 says "one fictional room". A future agent might then delete A101/B204 or C310 from `main.js`, and removing C310 would take away the page's only blocked room for AC3. Your options:
+  - (a) Accept the line as written and record the three sample rooms as a known gap in lab-report.md.
+  - (b) Change the code later, as a separate approved change.
+  - (c) Reword the line, for example "fictional sample rooms only". That would likely fail checker C1, which looks for "one room".
+
+  I recommend (a).
+- **Wording to look at:** the "Keep bookings in memory ... no login" line sits under the "You may" heading, so it reads a bit oddly. I kept it there so as not to add a new heading.
+
+Reply "approved" (with any wording changes) and I'll apply exactly this diff to `app/AGENTS.md` and nothing else. Until then I've changed no files.
+
+  ### Critical Files for Implementation
+- /home/claude/se-practice/week-10/app/AGENTS.md
+- /home/claude/se-practice/week-10/README.md
+- /home/claude/se-practice/week-10/tests/check_audit.py
+- /home/claude/se-practice/week-10/app/package.json
+- /home/claude/se-practice/week-10/app/src/main.js
 ```
 
 ### 6.2 Findings and my decisions
@@ -364,17 +448,73 @@ One row per missing or conflicting rule the answer reported, plus any it missed.
 
 | # | Rule or line in AGENTS.md | Missing / conflicting | Decision | Why |
 | --- | --- | --- | --- | --- |
-| 1 | | | | |
-| 2 | | | | |
-| 3 | | | | |
-| 4 | | | | |
+| 1 | line 12 "use real room names and the real timetable from the KBTU portal" | conflicting (C1) | approve | real university data has no place in a project of one fictional room; the new line says one fictional room with made-up bookings |
+| 2 | line 33 "add a small Supabase table and a login page" | conflicting (C2) | approve | the scope says no login and no database; bookings stay in memory |
+| 3 | line 19 AC4 "touching ... also counts as an overlap", and no AC6 | conflicting + missing (C3) | approve | the contract allows touching and T01, T08, B6, BUG-A test it; AC6 must be in the list so an agent keeps the UI feedback |
+| 4 | no rule about secrets | missing (C4) | approve | Supabase and Netlify would both need keys; one line forbids keys, tokens, passwords and `.env` |
+| 5 | line 38 `npx netlify deploy --prod` | conflicting (C5) | approve | an external production deploy with no human; replaced by "never deploy or publish" |
+| 6 | line 26 `npm run test:unit`, and no rule to run tests | wrong command + missing (C6) | approve | the script does not exist (my run in 2.1); `npm test` is real, and a new line makes the tests a condition for "done" |
+| 7 | lines 8-10 React + TypeScript, `booking.ts`, `App.tsx` | wrong (accuracy) | approve | the project is plain JS; I checked `ls src` and `package.json` |
+| 8 | three rooms in `src/main.js` vs "one fictional room" | conflict in the code | approve | option (a): the AGENTS.md line stays as the scope says, and the gap is my R6, open (section 10); not changed in code this week because C310 is the only blocked room for AC3 |
+| 9 | line 32 "Add packages when a task needs them" (the agent left it out of its patch) | missing control | modify | I added it myself as "Do not add packages without my approval.": one line, and "no new dependencies" is also in the refactor prompt |
+| 10 | line 31 "Edit any file in the project" and line 4 "follow it over any general habit" | too broad | reject | kept as they are to keep the patch minimal; once the file is correct, "follow it" is fine, and the permitted files are limited in my background-agent rules (9.1) |
 
 ### 6.3 The approved patch
 
 `git diff app/AGENTS.md`, after you applied only what you approved:
 
 ```text
-(paste here)
+diff --git a/week-10/app/AGENTS.md b/week-10/app/AGENTS.md
+index b786d88..9ab4e2c 100644
+--- a/week-10/app/AGENTS.md
++++ b/week-10/app/AGENTS.md
+@@ -5,34 +5,37 @@ anything, and follow it over any general habit of yours.
+ 
+ ## Project
+ 
+-A React + TypeScript page (Vite) that tells a student whether a campus room is free for a
+-requested time. The booking rule lives in `src/booking.ts` (`canBook`); the page is `src/App.tsx`;
+-the tests are in `src/booking.test.ts`.
++A plain JavaScript page (Vite) that tells a student whether a campus room is free for a
++requested time. The booking rule lives in `src/booking.js` (`canBook`); the page is `index.html` with `src/main.js`;
++the tests are in `src/booking.test.js`.
+ 
+-For realism, use real room names and the real timetable from the KBTU portal.
++Use one fictional room with made-up bookings only; never real room names, timetables or KBTU portal data.
+ 
+ ## Acceptance contract
+ 
+ - AC1 Reject start ≥ end and requests in the past.
+ - AC2 Enforce the maximum allowed duration (120 minutes).
+ - AC3 Reject a blocked room.
+-- AC4 Reject overlaps. A request that touches a booking at an endpoint also counts as an overlap.
++- AC4 Reject overlaps; allow bookings that only touch at endpoints.
+ - AC5 Return Available / Unavailable without changing booking data.
++- AC6 Preserve clear UI feedback on desktop and mobile.
+ 
+ ## Commands
+ 
+ - Install: `npm install`
+ - Dev server: `npm run dev`
+-- Tests: `npm run test:unit`
++- Tests: `npm test` (runs `vitest run`)
+ - Build: `npm run build`
+ 
+ ## You may
+ 
+ - Edit any file in the project.
+-- Add packages when a task needs them.
+-- If bookings need to persist, add a small Supabase table and a login page.
++- Do not add packages without my approval.
++- Keep bookings in memory: no login, no database, no Supabase or other backend.
++- Never add secrets, API keys, tokens, passwords or .env files to the project.
+ 
+ ## Before you finish
+ 
+ - Make sure the page still loads.
+-- When the build passes, publish a preview with `npx netlify deploy --prod` so the team can see it.
++- Run `npm test` before proposing any change as done; all tests must pass, and paste the real output.
++- Never deploy or publish the app anywhere (no Netlify, no `--prod`); a human decides about releases.
 ```
 
 ---
