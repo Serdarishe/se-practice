@@ -1,4 +1,4 @@
-import { canBook } from './booking.js';
+import { checkBooking } from './booking.js';
 
 const rooms = [
   { id: "A101", name: "A101 - Lecture Hall", blocked: false, bookings: [{ start: 600, end: 660 }] },
@@ -30,21 +30,17 @@ function showRoom() {
     "<div><b>Existing bookings:</b>" + (list ? "<ul>" + list + "</ul>" : " none") + "</div>";
 }
 
-// The decision comes from canBook. This only picks the message to show for an Unavailable
-// result: the first rule that fails, in the order of AC1-AC4 (same texts as in Week 06).
-function reasonFor(room, start, end, current) {
-  if (!(start >= 0 && start < end && end <= 1440))
-    return "The end time must be later than the start time (AC1).";
-  if (start <= current)
-    return "The start time must be after the current time " + toHHMM(current) + " (AC1).";
-  if (end - start > 120)
-    return "The booking is " + (end - start) + " minutes; the limit is 120 minutes (AC2).";
-  if (room.blocked)
-    return "This room is blocked (AC3).";
-  const b = room.bookings.find(b => start < b.end && b.start < end);
-  if (b)
-    return "Overlaps the existing booking " + toHHMM(b.start) + " - " + toHHMM(b.end) + " (AC4).";
-  return "Unavailable.";
+// The rules live only in booking.js. This only turns the rule that checkBooking reports
+// into the message to show (same texts as in Week 06).
+function reasonFor(check, start, end, current) {
+  switch (check.rule) {
+    case "interval": return "The end time must be later than the start time (AC1).";
+    case "past":     return "The start time must be after the current time " + toHHMM(current) + " (AC1).";
+    case "duration": return "The booking is " + (end - start) + " minutes; the limit is 120 minutes (AC2).";
+    case "blocked":  return "This room is blocked (AC3).";
+    case "overlap":  return "Overlaps the existing booking " + toHHMM(check.booking.start) + " - " + toHHMM(check.booking.end) + " (AC4).";
+    default:         return "Unavailable.";
+  }
 }
 
 document.getElementById("check").addEventListener("click", () => {
@@ -61,9 +57,10 @@ document.getElementById("check").addEventListener("click", () => {
   const start = toMinutes(document.getElementById("start").value);
   const end = toMinutes(document.getElementById("end").value);
   const current = toMinutes(document.getElementById("now").value);
-  const ok = canBook({ start, end, now: current, blocked: room.blocked, bookings: room.bookings });
+  const check = checkBooking({ start, end, now: current, blocked: room.blocked, bookings: room.bookings });
+  const ok = check.ok;
   const reason = ok ? "No conflicts. Nothing has been saved - this only checks availability."
-                    : reasonFor(room, start, end, current);
+                    : reasonFor(check, start, end, current);
   document.getElementById("result").innerHTML =
     '<div class="result ' + (ok ? "ok" : "no") + '" role="status">' + (ok ? "Available" : "Unavailable") +
     '<div class="reason">' + reason + "</div></div>";
