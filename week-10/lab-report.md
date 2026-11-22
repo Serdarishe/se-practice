@@ -383,10 +383,59 @@ One row per missing or conflicting rule the answer reported, plus any it missed.
 
 ### 7.1 The regression test fails before the mitigation
 
-The risk it covers: **R?**. The real run, with the new test failing:
+The risk it covers: **R5**. The test `R5 AC6: ...` asks the booking module for `checkBooking(input)`: one pure function that names the broken rule (`interval`, `past`, `duration`, `blocked`, `overlap`) or says `ok`, and must agree with `canBook` on six cases (T04, T02, T07, T13, T09, T01). Before the refactor the rules for the reasons only exist inside `src/main.js` `reasonFor()`, which a test cannot import, so it fails: The real run, with the new test failing:
 
 ```text
-(paste here)
+ RUN  v3.2.7 /home/claude/se-practice/week-10/app
+
+ ❯ src/booking.test.js (26 tests | 1 failed) 18ms
+   ✓ AC1 - valid interval after the supplied current time > T02 AC1: 540-570 starts exactly at now (540) is rejected 1ms
+   ✓ AC1 - valid interval after the supplied current time > T03 AC1: 720-720 zero duration is rejected 0ms
+   ✓ AC1 - valid interval after the supplied current time > T04 AC1: 750-720 reversed interval is rejected 0ms
+   ✓ AC1 - valid interval after the supplied current time > T05 AC1: 1380-1441 ends one minute after 24:00 and is rejected 0ms
+   ✓ AC1 - valid interval after the supplied current time > X1 AC1 AC2: 1320-1440 ends exactly at 24:00 with 120 minutes and is accepted 0ms
+   ✓ AC1 - valid interval after the supplied current time > B1 AC1: 541-571 starts one minute after now and is accepted 0ms
+   ✓ AC1 - valid interval after the supplied current time > B2 AC1: 530-570 starts before now (540) but ends after it and is rejected 0ms
+   ✓ AC2 - at most 120 minutes > T06 AC2: 720-840 is exactly 120 minutes and is accepted 0ms
+   ✓ AC2 - at most 120 minutes > T07 AC2: 720-841 is 121 minutes and is rejected 0ms
+   ✓ AC3 - blocked room > T13 AC3: 660-720 in a blocked room is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > T01 AC4: 660-720 touches the end of 600-660 and is accepted 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > T08 AC4: 570-600 touches the start of 600-660 and is accepted 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > T09 AC4: 630-690 partly overlaps 600-660 and is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > T10 AC4: 570-690 contains the whole booking 600-660 and is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > T11 AC4: 615-645 lies inside 600-660 and is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > T12 AC4: 600-660 is identical to the booking and is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > T14 AC4: 630-690 with no bookings ([]) is accepted 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > X2 AC4: 660-750 touches 600-660 but overlaps the second booking 720-780 and is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > B3 AC4: 659-719 overlaps the end of 600-660 by one minute and is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > B4 AC4: 571-601 overlaps the start of 600-660 by one minute and is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > B5 AC4: 630-690 with unsorted bookings [720-780, 600-660] overlaps the later entry and is rejected 0ms
+   ✓ AC4 - no overlap, touching endpoints allowed > B6 AC4: 660-720 fills the gap between 600-660 and 720-780, touching both, and is accepted 0ms
+   ✓ AC5 - decision only, existing bookings unchanged > AC5: an Available request (660-720) leaves the bookings exactly as before 1ms
+   ✓ Week 08 regression tests > BUG-A AC4: 1380-1440 touches the end of 1320-1380 and ends at 24:00, so it is Available 0ms
+   ✓ Week 08 regression tests > BUG-B AC5: an Available request 720-780 that touches nothing leaves the bookings unchanged 0ms
+   × Week 10 regression test > R5 AC6: checkBooking names the broken rule for each Unavailable case and agrees with canBook 6ms
+     → (0 , checkBooking) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/booking.test.js > Week 10 regression test > R5 AC6: checkBooking names the broken rule for each Unavailable case and agrees with canBook
+TypeError: (0 , checkBooking) is not a function
+ ❯ src/booking.test.js:166:26
+    164|     ];
+    165|     for (const [input, expected] of cases) {
+    166|       expect(checkBooking(input)).toEqual(expected);
+       |                          ^
+    167|       expect(canBook(input)).toBe(expected.ok);
+    168|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 25 passed (26)
+   Start at  16:57:02
+   Duration  257ms (transform 39ms, setup 0ms, collect 26ms, tests 18ms, environment 0ms, prepare 66ms)
 ```
 
 ### 7.2 The manual UI check
@@ -399,7 +448,12 @@ The risk it covers: **R?**. The real run, with the new test failing:
 ### 7.3 Tests and checks I did not run
 
 <!-- Name each one and why. "None" only if it is true. -->
--
+- `npm run lint` and `npm run test:unit`: not run because they do not exist (2.1); there is no linter in the project at all (row 1b).
+- No automated test of the page (`index.html` + `src/main.js`): there is no DOM test setup (no jsdom / happy-dom, row 3c). The page messages are only checked by hand in 7.2; after the refactor the rules behind them are covered by the R5 test, but the HTML is not.
+- Not checked on a real phone: the mobile check used Chromium's phone emulation (iPhone X profile, 375 px), not a physical device.
+- Not run on another Node version than 22, and not in a CI (there is none, row 3a).
+- The 22:00-00:00 case (AI R9) was checked once in the browser, but there is no test for it, because the limit is in the HTML time input, not in `canBook`.
+- `npx netlify deploy --prod` was never run, on purpose (R1).
 
 ---
 

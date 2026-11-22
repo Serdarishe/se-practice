@@ -2,7 +2,7 @@
 // (suites/first/booking.test.js) and revised after the review in lab-report.md section 5.
 // Expected values come from AC1-AC4 and the plan in lab-report.md section 3, not from the code.
 import { describe, test, expect } from 'vitest';
-import { canBook } from './booking';
+import { canBook, checkBooking } from './booking';
 
 // Fresh default fixture for every call: now 09:00, not blocked, one booking 10:00-11:00.
 function fixture(start, end, changes = {}) {
@@ -147,5 +147,24 @@ describe('Week 08 regression tests', () => {
 
     expect(result).toBe(true);
     expect(bookings).toStrictEqual(before);
+  });
+});
+
+describe('Week 10 regression test', () => {
+  // R5: the page's reasons (AC6) must come from the same rules as canBook, not from a second copy in main.js.
+  test('R5 AC6: checkBooking names the broken rule for each Unavailable case and agrees with canBook', () => {
+    const base = { now: 540, blocked: false, bookings: [{ start: 600, end: 660 }] };
+    const cases = [
+      [{ ...base, start: 750, end: 720 }, { ok: false, rule: 'interval' }],                                // T04 AC1
+      [{ ...base, start: 540, end: 570 }, { ok: false, rule: 'past' }],                                    // T02 AC1
+      [{ ...base, start: 720, end: 841 }, { ok: false, rule: 'duration' }],                                // T07 AC2
+      [{ ...base, start: 660, end: 720, blocked: true }, { ok: false, rule: 'blocked' }],                  // T13 AC3
+      [{ ...base, start: 630, end: 690 }, { ok: false, rule: 'overlap', booking: { start: 600, end: 660 } }], // T09 AC4
+      [{ ...base, start: 660, end: 720 }, { ok: true }],                                                    // T01 AC4
+    ];
+    for (const [input, expected] of cases) {
+      expect(checkBooking(input)).toEqual(expected);
+      expect(canBook(input)).toBe(expected.ok);
+    }
   });
 });
